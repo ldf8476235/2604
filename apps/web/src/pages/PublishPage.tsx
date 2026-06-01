@@ -1,5 +1,5 @@
 import { Button, StatusState } from "@delta/ui";
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type TouchEvent as ReactTouchEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { loadRealNameProfile } from "../auth/auth-api";
 import { useAuth } from "../auth/auth-context";
@@ -1532,6 +1532,9 @@ function RegionPicker({
   }, []);
 
   const toggleOpen = () => {
+    if (isPublishDropdownOpenBlocked()) {
+      return;
+    }
     setOpen((previous) => {
       const next = !previous;
       if (next) {
@@ -1576,6 +1579,39 @@ function RegionPicker({
     if (moved > 8) {
       return;
     }
+    event.preventDefault();
+    event.stopPropagation();
+    suppressCityClickRef.current = true;
+    selectCity(nextProvinceCode, nextCityCode);
+  };
+
+  const handleCityTouchStart = (event: ReactTouchEvent<HTMLButtonElement>, nextProvinceCode: string, nextCityCode: string) => {
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+    cityTapRef.current = {
+      provinceCode: nextProvinceCode,
+      cityCode: nextCityCode,
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+    suppressCityClickRef.current = false;
+  };
+
+  const handleCityTouchEnd = (event: ReactTouchEvent<HTMLButtonElement>, nextProvinceCode: string, nextCityCode: string) => {
+    const touch = event.changedTouches[0];
+    const start = cityTapRef.current;
+    cityTapRef.current = null;
+    if (!touch || !start || start.provinceCode !== nextProvinceCode || start.cityCode !== nextCityCode) {
+      return;
+    }
+    const moved = Math.hypot(touch.clientX - start.x, touch.clientY - start.y);
+    if (moved > 8) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
     suppressCityClickRef.current = true;
     selectCity(nextProvinceCode, nextCityCode);
   };
@@ -1641,7 +1677,23 @@ function RegionPicker({
                       }
                       handleCityPointerUp(event, activeProvince.code, city.code);
                     }}
-                    onClick={() => {
+                    onTouchCancel={() => {
+                      cityTapRef.current = null;
+                    }}
+                    onTouchEnd={(event) => {
+                      if (!activeProvince) {
+                        return;
+                      }
+                      handleCityTouchEnd(event, activeProvince.code, city.code);
+                    }}
+                    onTouchStart={(event) => {
+                      if (!activeProvince) {
+                        return;
+                      }
+                      handleCityTouchStart(event, activeProvince.code, city.code);
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation();
                       if (suppressCityClickRef.current) {
                         suppressCityClickRef.current = false;
                         return;

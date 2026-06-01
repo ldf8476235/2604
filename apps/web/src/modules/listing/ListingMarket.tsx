@@ -1,5 +1,5 @@
 import { Button, StatusState } from "@delta/ui";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent, type RefObject, type TouchEvent as ReactTouchEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth-context";
 import {
@@ -40,6 +40,16 @@ const desktopPresetActions = [
   { key: "recent", label: "近7天" },
   { key: "always-online", label: "24h随时上号区" },
 ] as const;
+
+let marketRegionOpenBlockedUntil = 0;
+
+function blockMarketRegionOpen(durationMs = 600) {
+  marketRegionOpenBlockedUntil = Date.now() + durationMs;
+}
+
+function isMarketRegionOpenBlocked() {
+  return Date.now() < marketRegionOpenBlockedUntil;
+}
 
 type DesktopPresetKey = (typeof desktopPresetActions)[number]["key"];
 type SortDirection = "asc" | "desc";
@@ -1239,6 +1249,7 @@ function RegionPicker({
     onSelect(values);
     setKeyword("");
     setOpen(false);
+    blockMarketRegionOpen();
     searchInputRef.current?.blur();
   };
 
@@ -1267,6 +1278,38 @@ function RegionPicker({
     if (moved > 8) {
       return;
     }
+    event.preventDefault();
+    event.stopPropagation();
+    suppressCityClickRef.current = true;
+    selectRegion([cityCode]);
+  };
+
+  const handleCityTouchStart = (event: ReactTouchEvent<HTMLButtonElement>, cityCode: string) => {
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+    cityTapRef.current = {
+      code: cityCode,
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+    suppressCityClickRef.current = false;
+  };
+
+  const handleCityTouchEnd = (event: ReactTouchEvent<HTMLButtonElement>, cityCode: string) => {
+    const touch = event.changedTouches[0];
+    const start = cityTapRef.current;
+    cityTapRef.current = null;
+    if (!touch || !start || start.code !== cityCode) {
+      return;
+    }
+    const moved = Math.hypot(touch.clientX - start.x, touch.clientY - start.y);
+    if (moved > 8) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
     suppressCityClickRef.current = true;
     selectRegion([cityCode]);
   };
@@ -1277,7 +1320,12 @@ function RegionPicker({
         aria-expanded={open}
         className="market-region-picker__trigger"
         type="button"
-        onClick={() => setOpen((previous) => !previous)}
+        onClick={() => {
+          if (isMarketRegionOpenBlocked()) {
+            return;
+          }
+          setOpen((previous) => !previous);
+        }}
       >
         <span className={selected.length ? "" : "is-placeholder"}>{formatSelectedRegion(regions, selected, placeholder)}</span>
         <span className="market-region-picker__arrow" />
@@ -1335,7 +1383,17 @@ function RegionPicker({
                     onPointerUp={(event) => {
                       handleCityPointerUp(event, city.code);
                     }}
-                    onClick={() => {
+                    onTouchCancel={() => {
+                      cityTapRef.current = null;
+                    }}
+                    onTouchEnd={(event) => {
+                      handleCityTouchEnd(event, city.code);
+                    }}
+                    onTouchStart={(event) => {
+                      handleCityTouchStart(event, city.code);
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation();
                       if (suppressCityClickRef.current) {
                         suppressCityClickRef.current = false;
                         return;
