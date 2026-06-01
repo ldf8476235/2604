@@ -56,8 +56,11 @@ public class OssStorageService {
     }
 
     public String previewUrl(String objectKey) {
+        if (properties.getPublicBaseUrl() != null && !properties.getPublicBaseUrl().trim().isEmpty()) {
+            return buildPublicUrl(objectKey);
+        }
         if (!properties.isEnabled()) {
-            return properties.getPublicBaseUrl() + "/" + objectKey;
+            return buildPublicUrl(objectKey);
         }
         OSS ossClient = null;
         try {
@@ -121,6 +124,14 @@ public class OssStorageService {
         GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(properties.getBucket(), objectKey, HttpMethod.GET);
         request.setExpiration(java.util.Date.from(Instant.now().plusSeconds(properties.getPreviewExpireSeconds())));
         return ossClient.generatePresignedUrl(request);
+    }
+
+    private String buildPublicUrl(String objectKey) {
+        String baseUrl = properties.getPublicBaseUrl() == null ? "" : properties.getPublicBaseUrl().trim();
+        if (baseUrl.endsWith("/")) {
+            return baseUrl + objectKey;
+        }
+        return baseUrl + "/" + objectKey;
     }
 
     public static class OssFileTicket {
