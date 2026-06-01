@@ -1295,11 +1295,6 @@ function RegionPicker({
                     className={`market-region-picker__option ${selected.includes(city.code) ? "is-active" : ""}`}
                     key={city.code}
                     type="button"
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      selectRegion([city.code]);
-                    }}
                     onClick={() => {
                       selectRegion([city.code]);
                     }}

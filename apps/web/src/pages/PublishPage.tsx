@@ -1594,14 +1594,6 @@ function RegionPicker({
                     className={`publish-region-picker__option ${provinceCode === activeProvince?.code && city.code === cityCode ? "is-active" : ""}`}
                     key={city.code}
                     type="button"
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      if (!activeProvince) {
-                        return;
-                      }
-                      selectCity(activeProvince.code, city.code);
-                    }}
                     onClick={() => {
                       if (!activeProvince) {
                         return;
