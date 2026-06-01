@@ -212,35 +212,44 @@ export function createUploadTicket(businessScope: string, filename: string, cont
 
 export async function uploadOssFile(businessScope: string, file: File, filename: string) {
   const prepared = await prepareImageForUpload(file);
+  return uploadPreparedFile(businessScope, prepared.file, normalizeUploadFilename(filename, prepared.file), prepared.compressed);
+}
+
+async function uploadPreparedFile(businessScope: string, file: File, filename: string, compressed: boolean) {
   const formData = new FormData();
   formData.append("businessScope", businessScope);
-  formData.append("file", prepared.file, normalizeUploadFilename(filename, prepared.file));
+  formData.append("file", file, filename);
   const result = await request<OssUploadResult>("/api/oss/upload", {
     method: "POST",
     body: formData,
   });
-  return { ...result, uploadedFile: prepared.file, compressed: prepared.compressed };
+  return { ...result, uploadedFile: file, compressed };
 }
 
 export async function uploadOssFileDirect(businessScope: string, file: File, filename: string) {
   const prepared = await prepareImageForUpload(file);
   const uploadFile = prepared.file;
-  const ticket = await createUploadTicket(businessScope, normalizeUploadFilename(filename, uploadFile), uploadFile.type);
-  const response = await fetch(ticket.uploadUrl, {
-    method: "PUT",
-    headers: uploadFile.type ? { "Content-Type": uploadFile.type } : undefined,
-    body: uploadFile,
-  });
-  if (!response.ok) {
-    throw new Error("OSS 直传失败");
+  const uploadFilename = normalizeUploadFilename(filename, uploadFile);
+  try {
+    const ticket = await createUploadTicket(businessScope, uploadFilename, uploadFile.type);
+    const response = await fetch(ticket.uploadUrl, {
+      method: "PUT",
+      headers: uploadFile.type ? { "Content-Type": uploadFile.type } : undefined,
+      body: uploadFile,
+    });
+    if (!response.ok) {
+      throw new Error("OSS 直传失败");
+    }
+    const preview = await loadOssPreview(ticket.objectKey).catch(() => ({ previewUrl: "" }));
+    return {
+      objectKey: ticket.objectKey,
+      previewUrl: preview.previewUrl,
+      uploadedFile: uploadFile,
+      compressed: prepared.compressed,
+    };
+  } catch {
+    return uploadPreparedFile(businessScope, uploadFile, uploadFilename, prepared.compressed);
   }
-  const preview = await loadOssPreview(ticket.objectKey);
-  return {
-    objectKey: ticket.objectKey,
-    previewUrl: preview.previewUrl,
-    uploadedFile: uploadFile,
-    compressed: prepared.compressed,
-  };
 }
 
 function normalizeUploadFilename(filename: string, file: File) {

@@ -95,10 +95,9 @@ public class OssStorageService {
                 metadata.setContentType(contentType.trim());
             }
             ossClient.putObject(properties.getBucket(), objectKey, inputStream, metadata);
-            URL previewUrl = generatePreviewUrl(ossClient, objectKey);
             log.info("oss proxy upload success bucket={} objectKey={} contentType={} contentLength={}",
                 properties.getBucket(), objectKey, contentType, contentLength);
-            return new OssUploadedFile(objectKey, previewUrl.toString());
+            return new OssUploadedFile(objectKey, previewUrl(objectKey));
         } catch (Exception exception) {
             log.error("oss proxy upload failed bucket={} objectKey={} contentType={} contentLength={}",
                 properties.getBucket(), objectKey, contentType, contentLength, exception);
