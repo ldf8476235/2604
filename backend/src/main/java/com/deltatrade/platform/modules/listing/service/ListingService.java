@@ -183,6 +183,9 @@ public class ListingService {
     public MarketplaceListResult loadMarketplace(MarketplaceQuery query) {
         long startAt = System.currentTimeMillis();
         MarketplaceQuery normalized = query == null ? new MarketplaceQuery() : query;
+        if (canUseDatabasePaging(normalized)) {
+            return loadMarketplacePageFromDatabase(normalized, startAt);
+        }
         List<AccountListingDO> rows = accountListingMapper.selectList(buildMarketplaceBaseQuery(normalized));
         Map<Long, SellerMetrics> sellerMetricsMap = loadSellerMetrics(rows);
 
@@ -227,6 +230,90 @@ public class ListingService {
             System.currentTimeMillis() - startAt
         );
         return new MarketplaceListResult(total, page, pageSize, hasMore, pagedRows);
+    }
+
+    private MarketplaceListResult loadMarketplacePageFromDatabase(MarketplaceQuery normalized, long startAt) {
+        int page = normalized.getPage();
+        int pageSize = normalized.getPageSize();
+        int fromIndex = Math.max(0, (page - 1) * pageSize);
+        Long totalCount = accountListingMapper.selectCount(buildMarketplaceBaseQuery(normalized));
+        int total = totalCount == null || totalCount.longValue() <= 0L
+            ? 0
+            : (int) Math.min(Integer.MAX_VALUE, totalCount.longValue());
+        List<ListingCard> pagedRows = new ArrayList<ListingCard>();
+        if (fromIndex < total) {
+            LambdaQueryWrapper<AccountListingDO> pageQuery = buildMarketplaceBaseQuery(normalized);
+            pageQuery.last(buildMarketplacePageClause(normalized.getSort(), fromIndex, pageSize));
+            List<AccountListingDO> rows = accountListingMapper.selectList(pageQuery);
+            Map<Long, SellerMetrics> sellerMetricsMap = loadSellerMetrics(rows);
+            for (AccountListingDO row : rows) {
+                try {
+                    pagedRows.add(toProjection(row, sellerMetricsMap.get(row.getSellerUserId())).getCard());
+                } catch (Exception exception) {
+                    log.warn("marketplace listing skipped listingNo={} reason={}", row.getListingNo(), exception.getMessage());
+                }
+            }
+        }
+        boolean hasMore = fromIndex + pageSize < total;
+        log.info(
+            "marketplace query success target=account_listing mode=db_page filters=region:{} weapon:{} rank:{} safeBox:{} sellerType:{} exchangeRateType:{} negotiable:{} alwaysOnline:{} publishedDays:{} sort:{} page:{} pageSize:{} count={} returned={} costMs={}",
+            normalized.getRegionCodes().size(),
+            normalized.getWeaponCodes().size(),
+            normalized.getRank(),
+            normalized.getSafeBoxLevel(),
+            normalized.getSellerType(),
+            normalized.getExchangeRateType(),
+            normalized.getNegotiable(),
+            normalized.getAlwaysOnline(),
+            normalized.getPublishedWithinDays(),
+            normalized.getSort(),
+            page,
+            pageSize,
+            total,
+            pagedRows.size(),
+            System.currentTimeMillis() - startAt
+        );
+        return new MarketplaceListResult(total, page, pageSize, hasMore, pagedRows);
+    }
+
+    private boolean canUseDatabasePaging(MarketplaceQuery query) {
+        String sort = query.getSort();
+        if (!"newest".equals(sort) && !"oldest".equals(sort)) {
+            return false;
+        }
+        return query.getMinPrice() == null
+            && query.getMaxPrice() == null
+            && !StringUtils.hasText(query.getDepositRange())
+            && query.getMaxHafCurrency() == null
+            && query.getMinAccountLevel() == null
+            && query.getMaxAccountLevel() == null
+            && query.getRegionCodes().isEmpty()
+            && query.getWeaponCodes().isEmpty()
+            && query.getKnifeSkins().isEmpty()
+            && query.getRedSkins().isEmpty()
+            && !StringUtils.hasText(query.getAwmBulletRange())
+            && !StringUtils.hasText(query.getRank())
+            && query.getSafeBoxLevel() == null
+            && query.getStaminaLevel() == null
+            && query.getCarryLevel() == null
+            && !StringUtils.hasText(query.getDeliveryMethod())
+            && !StringUtils.hasText(query.getSellerType())
+            && !StringUtils.hasText(query.getExchangeRateType())
+            && query.getNegotiable() == null
+            && query.getAlwaysOnline() == null
+            && query.getPublishedWithinDays() == null;
+    }
+
+    private String buildMarketplacePageClause(String sort, int fromIndex, int pageSize) {
+        String direction = "oldest".equals(sort) ? "ASC" : "DESC";
+        return "ORDER BY COALESCE(published_at, submitted_at, created_at) "
+            + direction
+            + ", id "
+            + direction
+            + " LIMIT "
+            + fromIndex
+            + ", "
+            + pageSize;
     }
 
     private LambdaQueryWrapper<AccountListingDO> buildMarketplaceBaseQuery(MarketplaceQuery query) {
