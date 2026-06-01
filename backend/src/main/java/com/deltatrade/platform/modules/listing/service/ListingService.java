@@ -1,5 +1,6 @@
 package com.deltatrade.platform.modules.listing.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.deltatrade.platform.common.auth.AuthPrincipal;
 import com.deltatrade.platform.common.exception.BusinessException;
@@ -182,10 +183,7 @@ public class ListingService {
     public MarketplaceListResult loadMarketplace(MarketplaceQuery query) {
         long startAt = System.currentTimeMillis();
         MarketplaceQuery normalized = query == null ? new MarketplaceQuery() : query;
-        List<AccountListingDO> rows = accountListingMapper.selectList(
-            Wrappers.<AccountListingDO>lambdaQuery()
-                .eq(AccountListingDO::getStatus, "PUBLISHED")
-        );
+        List<AccountListingDO> rows = accountListingMapper.selectList(buildMarketplaceBaseQuery(normalized));
         Map<Long, SellerMetrics> sellerMetricsMap = loadSellerMetrics(rows);
 
         List<ListingCard> result = new ArrayList<ListingCard>();
@@ -229,6 +227,28 @@ public class ListingService {
             System.currentTimeMillis() - startAt
         );
         return new MarketplaceListResult(total, page, pageSize, hasMore, pagedRows);
+    }
+
+    private LambdaQueryWrapper<AccountListingDO> buildMarketplaceBaseQuery(MarketplaceQuery query) {
+        LambdaQueryWrapper<AccountListingDO> wrapper = Wrappers.<AccountListingDO>lambdaQuery()
+            .eq(AccountListingDO::getStatus, "PUBLISHED");
+        if (StringUtils.hasText(query.getKeyword())) {
+            String keyword = query.getKeyword().trim();
+            wrapper.and(inner -> inner
+                .like(AccountListingDO::getListingNo, keyword)
+                .or()
+                .like(AccountListingDO::getTitle, keyword)
+                .or()
+                .like(AccountListingDO::getSellerNickname, keyword)
+                .or()
+                .like(AccountListingDO::getStudioName, keyword)
+                .or()
+                .like(AccountListingDO::getProvinceName, keyword)
+                .or()
+                .like(AccountListingDO::getCityName, keyword)
+            );
+        }
+        return wrapper;
     }
 
     public ListingDetail loadDetail(String listingNo) {
