@@ -1451,6 +1451,8 @@ function RegionPicker({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const dropdownIdRef = useRef(`publish-region-${Math.random().toString(36).slice(2)}`);
+  const cityTapRef = useRef<{ provinceCode: string; cityCode: string; x: number; y: number } | null>(null);
+  const suppressCityClickRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [activeProvinceCode, setActiveProvinceCode] = useState(provinceCode);
@@ -1548,6 +1550,36 @@ function RegionPicker({
     searchInputRef.current?.blur();
   };
 
+  const handleCityPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, nextProvinceCode: string, nextCityCode: string) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    cityTapRef.current = {
+      provinceCode: nextProvinceCode,
+      cityCode: nextCityCode,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    suppressCityClickRef.current = false;
+  };
+
+  const handleCityPointerUp = (event: ReactPointerEvent<HTMLButtonElement>, nextProvinceCode: string, nextCityCode: string) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const start = cityTapRef.current;
+    cityTapRef.current = null;
+    if (!start || start.provinceCode !== nextProvinceCode || start.cityCode !== nextCityCode) {
+      return;
+    }
+    const moved = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+    if (moved > 8) {
+      return;
+    }
+    suppressCityClickRef.current = true;
+    selectCity(nextProvinceCode, nextCityCode);
+  };
+
   return (
     <div className={`publish-region-picker ${open ? "is-open" : ""}`} ref={containerRef}>
       <button
@@ -1594,7 +1626,26 @@ function RegionPicker({
                     className={`publish-region-picker__option ${provinceCode === activeProvince?.code && city.code === cityCode ? "is-active" : ""}`}
                     key={city.code}
                     type="button"
+                    onPointerCancel={() => {
+                      cityTapRef.current = null;
+                    }}
+                    onPointerDown={(event) => {
+                      if (!activeProvince) {
+                        return;
+                      }
+                      handleCityPointerDown(event, activeProvince.code, city.code);
+                    }}
+                    onPointerUp={(event) => {
+                      if (!activeProvince) {
+                        return;
+                      }
+                      handleCityPointerUp(event, activeProvince.code, city.code);
+                    }}
                     onClick={() => {
+                      if (suppressCityClickRef.current) {
+                        suppressCityClickRef.current = false;
+                        return;
+                      }
                       if (!activeProvince) {
                         return;
                       }

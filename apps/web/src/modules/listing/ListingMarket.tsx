@@ -1,5 +1,5 @@
 import { Button, StatusState } from "@delta/ui";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth-context";
 import {
@@ -1171,6 +1171,8 @@ function RegionPicker({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const cityTapRef = useRef<{ code: string; x: number; y: number } | null>(null);
+  const suppressCityClickRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const provinceGroups = useMemo(() => groupRegionsByProvince(regions), [regions]);
@@ -1240,6 +1242,35 @@ function RegionPicker({
     searchInputRef.current?.blur();
   };
 
+  const handleCityPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, cityCode: string) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    cityTapRef.current = {
+      code: cityCode,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    suppressCityClickRef.current = false;
+  };
+
+  const handleCityPointerUp = (event: ReactPointerEvent<HTMLButtonElement>, cityCode: string) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const start = cityTapRef.current;
+    cityTapRef.current = null;
+    if (!start || start.code !== cityCode) {
+      return;
+    }
+    const moved = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+    if (moved > 8) {
+      return;
+    }
+    suppressCityClickRef.current = true;
+    selectRegion([cityCode]);
+  };
+
   return (
     <div className={`market-region-picker ${className ?? ""} ${open ? "is-open" : ""}`.trim()} ref={containerRef}>
       <button
@@ -1295,7 +1326,20 @@ function RegionPicker({
                     className={`market-region-picker__option ${selected.includes(city.code) ? "is-active" : ""}`}
                     key={city.code}
                     type="button"
+                    onPointerCancel={() => {
+                      cityTapRef.current = null;
+                    }}
+                    onPointerDown={(event) => {
+                      handleCityPointerDown(event, city.code);
+                    }}
+                    onPointerUp={(event) => {
+                      handleCityPointerUp(event, city.code);
+                    }}
                     onClick={() => {
+                      if (suppressCityClickRef.current) {
+                        suppressCityClickRef.current = false;
+                        return;
+                      }
                       selectRegion([city.code]);
                     }}
                   >
