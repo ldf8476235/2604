@@ -1,0 +1,9 @@
+http://49.232.154.165 {
+    encode gzip
+    reverse_proxy app:80
+}
+
+beifanghanzi12000.czsonghong.cn {
+    encode gzip
+    reverse_proxy app:80
+}

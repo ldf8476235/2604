@@ -1,0 +1,2976 @@
+:root {
+  color-scheme: light;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #18233a;
+  background: #eef3fb;
+}
+
+.console-action-group {
+  display: grid;
+  gap: 14px;
+}
+
+.console-action-group textarea {
+  width: 100%;
+  min-height: 92px;
+  border: 1px solid rgba(20, 34, 58, 0.12);
+  border-radius: 16px;
+  padding: 14px 16px;
+  resize: vertical;
+  font: inherit;
+  color: #12213a;
+  background: #fff;
+}
+
+.console-review-reason {
+  margin: 0;
+  color: #d26e1b;
+  font-weight: 700;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(248, 214, 124, 0.18), transparent 26%),
+    linear-gradient(180deg, #f7fafc 0%, #edf2fb 56%, #e8eef8 100%);
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.console-shell {
+  display: grid;
+  grid-template-columns: 296px 1fr;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.console-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 28px 22px;
+  border-right: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(253, 252, 249, 0.88);
+  backdrop-filter: blur(18px);
+  overflow-y: auto;
+}
+
+.console-sidebar__profile {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-sidebar__profile .dt-button {
+  width: 100%;
+}
+
+.console-sidebar__profile p {
+  margin: 0;
+  color: #66748f;
+}
+
+.dt-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dt-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: #1c2944;
+  color: #fff;
+  font-weight: 800;
+}
+
+.dt-brand__mark--image {
+  width: 142px;
+  height: 43px;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.dt-brand__mark--image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.console-menu {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.console-menu__item {
+  appearance: none;
+  border: 1px solid rgba(28, 41, 68, 0.08);
+  background: rgba(255, 255, 255, 0.74);
+  border-radius: 18px;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  color: #5d6b86;
+  display: grid;
+  gap: 4px;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.console-menu__item strong {
+  font-size: 17px;
+  color: #1b2740;
+}
+
+.console-menu__item small {
+  line-height: 1.5;
+}
+
+.console-menu__item.is-active {
+  border-color: rgba(29, 99, 255, 0.28);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(237, 245, 255, 0.94));
+  transform: translateY(-1px);
+}
+
+.console-main {
+  padding: 28px clamp(22px, 2.6vw, 34px) 36px;
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.console-auth-shell {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
+  align-content: center;
+  padding: 24px;
+}
+
+.console-login {
+  display: grid;
+  gap: 16px;
+}
+
+.console-login p {
+  margin: 0;
+  color: #66748f;
+  line-height: 1.7;
+}
+
+.console-login label {
+  display: grid;
+  gap: 8px;
+  color: #4f5f7c;
+}
+
+.console-login input {
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 35, 58, 0.14);
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.console-login__error {
+  color: #c54141 !important;
+}
+
+.console-login__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.console-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 28px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  border-radius: 28px;
+  backdrop-filter: blur(14px);
+}
+
+.console-actions,
+.console-metrics,
+.console-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.console-actions {
+  flex-shrink: 0;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  justify-content: start;
+  align-self: center;
+}
+
+.console-notice {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 260px;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  background: rgba(28, 41, 68, 0.92);
+  color: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(10px);
+  animation: console-toast-in 180ms ease-out;
+}
+
+.console-notice button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+@keyframes console-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.console-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.console-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+}
+
+.console-grid--detail {
+  align-items: start;
+}
+
+.console-listing-review-layout {
+  grid-template-columns: minmax(0, 1.08fr) minmax(460px, 0.92fr);
+  align-items: stretch;
+  min-height: 0;
+  height: calc(100vh - 270px);
+}
+
+.console-listing-review-pane {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.console-listing-review-pane > .dt-card {
+  min-height: 100%;
+}
+
+.console-listing-review-pane--detail > .dt-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.console-studio-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.console-user-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.console-user-panel__summary {
+  display: grid;
+  gap: 10px;
+}
+
+.console-user-panel__summary strong {
+  font-size: 24px;
+}
+
+.console-user-panel__summary p {
+  margin: 0;
+  color: #5b6b86;
+}
+
+.console-user-panel__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.console-user-panel__form {
+  display: grid;
+  gap: 12px;
+}
+
+.console-user-panel__form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+  color: #1f2d4d;
+}
+
+.console-user-panel__form input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(24, 35, 58, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.console-user-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.console-review-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+}
+
+.console-review-panel__head {
+  display: grid;
+  gap: 6px;
+}
+
+.console-review-panel__head h4 {
+  margin: 0;
+}
+
+.console-review-panel__head span,
+.console-review-panel__summary,
+.console-review-panel__links span,
+.console-review-panel__links a {
+  color: #6a7891;
+  line-height: 1.6;
+}
+
+.console-review-panel label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+  color: #1f2d4d;
+}
+
+.console-review-panel textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 96px;
+  border: 1px solid rgba(24, 35, 58, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 12px 14px;
+  font: inherit;
+  resize: vertical;
+}
+
+.console-review-panel__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.console-user-detail {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.console-user-detail__avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+  display: grid;
+  place-items: center;
+  color: #7b89a2;
+  font-weight: 700;
+}
+
+.console-user-detail__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.console-user-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.console-user-detail__facts div,
+.console-user-kpis__item,
+.console-user-detail__block {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+}
+
+.console-user-detail__facts dt {
+  color: #73819a;
+  margin-bottom: 6px;
+}
+
+.console-user-detail__facts dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.console-user-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-user-kpis__item {
+  display: grid;
+  gap: 6px;
+}
+
+.console-user-kpis__item span {
+  color: #73819a;
+}
+
+.console-user-kpis__item strong {
+  font-size: 22px;
+  color: #1f2d4d;
+}
+
+.console-user-detail__blocks,
+.console-user-detail__lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-user-detail__block h4,
+.console-user-detail__list h4 {
+  margin: 0 0 10px;
+}
+
+.console-user-detail__block p {
+  margin: 0;
+  line-height: 1.6;
+  color: #64738d;
+}
+
+.console-user-detail__list {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+}
+
+.console-user-detail__list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.console-user-detail__list li {
+  display: grid;
+  gap: 4px;
+}
+
+.console-user-detail__list span {
+  color: #73819a;
+}
+
+.console-role-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.console-role-editor label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+  color: #1f2d4d;
+}
+
+.console-role-editor input,
+.console-role-editor textarea,
+.console-role-editor select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(24, 35, 58, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.console-role-editor textarea {
+  resize: vertical;
+}
+
+.console-role-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-role-editor__permissions {
+  display: grid;
+  gap: 10px;
+}
+
+.console-role-editor__permissions > span {
+  font-weight: 700;
+  color: #1f2d4d;
+}
+
+.console-role-editor__permission-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.console-role-editor__permission-group {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+}
+
+.console-role-editor__permission-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.console-role-editor__permission-group-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.console-role-editor__permission-group-head small {
+  color: #73819a;
+}
+
+.console-role-editor__permission-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.console-role-editor__members-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.console-role-editor__members-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.console-role-editor__members-tools input {
+  min-width: 220px;
+}
+
+.console-role-editor__member-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.console-role-editor__permission {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+}
+
+.console-operation-editor {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+}
+
+.console-operation-editor label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+  color: #1f2d4d;
+}
+
+.console-operation-editor input,
+.console-operation-editor textarea,
+.console-operation-editor select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(24, 35, 58, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.console-operation-editor textarea {
+  resize: vertical;
+  min-height: 132px;
+}
+
+.console-operation-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-operation-editor__asset {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.console-operation-editor__asset img,
+.console-operation-editor__placeholder {
+  width: 168px;
+  height: 112px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px dashed rgba(24, 35, 58, 0.14);
+  background: rgba(241, 246, 255, 0.88);
+}
+
+.console-operation-editor__placeholder {
+  display: grid;
+  place-items: center;
+  color: #8190a9;
+  font-weight: 700;
+}
+
+.console-operation-editor__asset-meta {
+  display: grid;
+  gap: 12px;
+}
+
+.console-operation-editor__asset-meta small {
+  color: #72809a;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.console-operation-editor__checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 10px !important;
+  padding-top: 30px;
+}
+
+.console-operation-editor__checkbox input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.console-operation-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.console-gun-code-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.console-gun-code-shell {
+  width: 100%;
+}
+
+.console-gun-code-workbench {
+  display: grid;
+  gap: 20px;
+}
+
+.console-gun-code-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 26px;
+  border-radius: 28px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: linear-gradient(135deg, rgba(247, 251, 255, 0.98), rgba(240, 254, 251, 0.96));
+  box-shadow: 0 16px 40px rgba(17, 34, 68, 0.06);
+}
+
+.console-gun-code-hero__copy {
+  display: grid;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.console-gun-code-hero__eyebrow {
+  margin: 0;
+  color: #5f718d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.console-gun-code-hero__copy h3 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.console-gun-code-hero__copy p:last-child {
+  margin: 0;
+  color: #66748f;
+  line-height: 1.7;
+}
+
+.console-gun-code-hero__actions {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.console-gun-code-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.console-gun-code-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(420px, 0.95fr);
+  gap: 20px;
+}
+
+.console-gun-code-card {
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(250, 252, 255, 0.96);
+  box-shadow: 0 18px 36px rgba(17, 34, 68, 0.05);
+}
+
+.console-gun-code-editor,
+.console-gun-code-preview,
+.console-gun-code-existing {
+  display: grid;
+  gap: 16px;
+}
+
+.console-gun-code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.console-gun-code-header strong {
+  font-size: 22px;
+  color: #17253f;
+}
+
+.console-gun-code-header p {
+  margin: 6px 0 0;
+  color: #66748f;
+  line-height: 1.6;
+}
+
+.console-gun-code-textarea {
+  min-height: 320px;
+}
+
+.console-gun-code-preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-gun-code-stat {
+  display: grid;
+  gap: 10px;
+  padding: 18px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.console-gun-code-stat span {
+  color: #66748f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.console-gun-code-stat strong {
+  color: #17253f;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.console-gun-code-notice,
+.console-gun-code-result,
+.console-gun-code-warning {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(245, 248, 253, 0.88);
+  color: #51627f;
+}
+
+.console-gun-code-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.console-gun-code-warning p,
+.console-gun-code-result span {
+  margin: 0;
+}
+
+.console-gun-code-error {
+  margin: 0;
+  color: #c54141;
+  font-weight: 700;
+}
+
+.console-gun-code-table {
+  overflow: auto;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.console-gun-code-table table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.console-gun-code-table th,
+.console-gun-code-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(24, 35, 58, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+.console-gun-code-table th {
+  color: #60718d;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(247, 250, 252, 0.92);
+}
+
+.console-gun-code-table small {
+  display: block;
+  padding: 12px 14px;
+  color: #60718d;
+}
+
+.console-gun-code-empty {
+  padding: 28px 18px;
+  border-radius: 16px;
+  border: 1px dashed rgba(24, 35, 58, 0.16);
+  color: #66748f;
+  text-align: center;
+  background: rgba(249, 251, 255, 0.7);
+}
+
+.console-gun-code-existing-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.console-gun-code-existing-item {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.console-gun-code-existing-item__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.console-gun-code-existing-item__top strong {
+  color: #17253f;
+}
+
+.console-gun-code-existing-item p {
+  margin: 0;
+  color: #66748f;
+  line-height: 1.6;
+}
+
+.console-gun-code-existing-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.console-queue {
+  display: grid;
+  gap: 12px;
+}
+
+.console-queue__item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(247, 249, 255, 0.82);
+  border: 1px solid rgba(24, 35, 58, 0.06);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.console-queue__item p,
+.console-overview__item span,
+.console-detail__desc,
+.console-timeline__item p {
+  margin: 0;
+  color: #66748f;
+  line-height: 1.6;
+}
+
+.console-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.console-overview__item {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(246, 250, 255, 0.84);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  display: grid;
+  gap: 8px;
+}
+
+.console-overview__item strong {
+  font-size: 26px;
+}
+
+.console-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.84);
+}
+
+.console-filter-row label {
+  display: grid;
+  gap: 8px;
+  color: #53627d;
+  min-width: 180px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.console-filter-row__search {
+  flex: 1;
+  min-width: 240px;
+}
+
+.console-filter-row input,
+.console-filter-row select {
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 35, 58, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0 14px;
+  color: #1a2741;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.console-summary-pills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.console-summary-pill {
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  display: grid;
+  gap: 6px;
+  box-shadow: 0 10px 24px rgba(16, 30, 54, 0.05);
+}
+
+.console-summary-pill strong {
+  font-size: 26px;
+  line-height: 1;
+  color: #15233d;
+}
+
+.console-summary-pill span {
+  color: #687791;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.console-table-scroll {
+  overflow-x: auto;
+}
+
+.console-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.console-table th,
+.console-table td {
+  padding: 16px 14px;
+  border-bottom: 1px solid rgba(24, 35, 58, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+.console-table tbody tr {
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.console-table tbody tr:hover,
+.console-table tbody tr.is-active {
+  background: rgba(244, 248, 255, 0.92);
+}
+
+.console-table p {
+  margin: 6px 0 0;
+  color: #687791;
+}
+
+.console-table--orders {
+  table-layout: fixed;
+  min-width: 1120px;
+}
+
+.console-order-col--order {
+  width: 150px;
+}
+
+.console-order-col--listing {
+  width: 300px;
+}
+
+.console-order-col--users {
+  width: 130px;
+}
+
+.console-order-col--status {
+  width: 78px;
+}
+
+.console-order-col--amount {
+  width: 130px;
+}
+
+.console-order-col--refund {
+  width: 110px;
+}
+
+.console-order-col--pay {
+  width: 82px;
+}
+
+.console-order-col--time {
+  width: 118px;
+}
+
+.console-order-col--actions {
+  width: 112px;
+}
+
+.console-table--orders th,
+.console-table--orders td {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.console-table--orders td:nth-child(2) strong {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.console-table--orders td:nth-child(2) p,
+.console-table--orders td:nth-child(8) {
+  overflow-wrap: anywhere;
+}
+
+.console-table--listing th:nth-child(1),
+.console-table--listing td:nth-child(1) {
+  width: 28%;
+}
+
+.console-table--listing th:nth-child(3),
+.console-table--listing td:nth-child(3) {
+  width: 18%;
+}
+
+.console-table--listing td:nth-child(1) strong {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.console-table--listing td:nth-child(3) {
+  white-space: nowrap;
+}
+
+.console-table__actions {
+  min-width: 180px;
+}
+
+.console-table__actions .dt-button + .dt-button {
+  margin-left: 8px;
+}
+
+.console-detail {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+}
+
+.console-detail__cover,
+.console-detail__placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(244, 247, 255, 0.94);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-detail__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.console-detail__placeholder {
+  display: grid;
+  place-items: center;
+  color: #6e7b93;
+}
+
+.console-detail__body {
+  display: grid;
+  gap: 16px;
+}
+
+.console-detail__body h3 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.console-detail__meta,
+.console-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.console-danger-action {
+  color: #cf2f4a;
+  border-color: rgba(207, 47, 74, 0.28);
+  background: rgba(207, 47, 74, 0.08);
+}
+
+.console-danger-action:hover:not(:disabled) {
+  background: rgba(207, 47, 74, 0.14);
+}
+
+.console-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.console-detail__facts div {
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(245, 249, 255, 0.92);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-detail__facts dt {
+  color: #73819a;
+  margin-bottom: 6px;
+}
+
+.console-detail__facts dd {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.console-detail__section {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(248, 251, 255, 0.92);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-detail__section h4 {
+  margin: 0 0 10px;
+}
+
+.console-listing-detail {
+  display: grid;
+  gap: 18px;
+}
+
+.console-listing-detail__hero {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.console-listing-detail__gallery {
+  display: grid;
+  gap: 10px;
+}
+
+.console-listing-detail__cover {
+  appearance: none;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(244, 247, 255, 0.94);
+  cursor: zoom-in;
+}
+
+.console-listing-detail__cover img,
+.console-listing-detail__thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.console-listing-detail__thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.console-listing-detail__thumbs button {
+  appearance: none;
+  padding: 0;
+  aspect-ratio: 1 / 1;
+  border: 1px solid rgba(24, 35, 58, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  cursor: zoom-in;
+}
+
+.console-listing-detail__head {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.console-listing-detail__head h3 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.console-listing-detail-section {
+  display: grid;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-listing-detail-section h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #16243c;
+}
+
+.console-image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.console-image-lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(8, 14, 26, 0.72);
+  cursor: zoom-out;
+}
+
+.console-image-lightbox__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(1100px, 94vw);
+  max-height: 90vh;
+  display: grid;
+  gap: 12px;
+}
+
+.console-image-lightbox__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.console-image-lightbox__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.console-image-lightbox__notice {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+  min-width: 168px;
+  max-width: min(360px, calc(100vw - 72px));
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #16243c;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.24);
+  pointer-events: none;
+}
+
+.console-image-lightbox__dialog img {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  max-height: 84vh;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 18px;
+  background: #0b1020;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.console-image-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.58);
+  font-size: 32px;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+  pointer-events: auto;
+}
+
+.console-image-lightbox__nav:hover {
+  background: rgba(15, 23, 42, 0.78);
+}
+
+.console-image-lightbox__nav:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+.console-image-lightbox__nav--prev {
+  left: 18px;
+}
+
+.console-image-lightbox__nav--next {
+  right: 18px;
+}
+
+.console-image-lightbox__close {
+  justify-self: end;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: #fff;
+  color: #17243d;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.console-status-block .dt-status-state {
+  min-height: 188px;
+  padding: 24px 26px;
+}
+
+.console-status-block--compact .dt-status-state {
+  min-height: 156px;
+  padding: 22px 24px;
+}
+
+.console-status-block .dt-status-state h3 {
+  font-size: 22px;
+}
+
+.console-status-block .dt-status-state__action {
+  margin-top: 12px;
+}
+
+.console-timeline__item {
+  padding: 14px 0;
+  border-bottom: 1px dashed rgba(24, 35, 58, 0.08);
+  display: grid;
+  gap: 6px;
+}
+
+.console-timeline__item:last-child {
+  border-bottom: 0;
+}
+
+.console-timeline__item span,
+.console-timeline__item small {
+  color: #6f7d96;
+}
+
+.console-studio-review-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+}
+
+.console-studio-review-table {
+  padding: 8px 0;
+}
+
+.console-studio-review-panel {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(248, 251, 255, 0.92);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  align-content: start;
+}
+
+.console-studio-list {
+  display: grid;
+  gap: 14px;
+}
+
+.console-studio-card {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(249, 251, 255, 0.92);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  display: grid;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.console-studio-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(69, 120, 255, 0.18);
+  background: rgba(244, 248, 255, 0.96);
+}
+
+.console-studio-card.is-active {
+  border-color: rgba(74, 129, 255, 0.22);
+  background: rgba(242, 247, 255, 0.96);
+}
+
+.console-studio-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.console-studio-card h3,
+.console-studio-card p {
+  margin: 0;
+}
+
+.console-studio-card p {
+  color: #6d7a95;
+  line-height: 1.6;
+}
+
+.console-studio-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.console-studio-card__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.console-studio-card__stats div {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-studio-card dt {
+  color: #738099;
+  margin-bottom: 4px;
+}
+
+.console-studio-card dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.console-studio-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.console-studio-card__footer span {
+  color: #61718b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.console-studio-card__footer strong {
+  color: #1a2741;
+  font-size: 13px;
+}
+
+.console-card-list {
+  display: grid;
+  gap: 14px;
+}
+
+.console-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.console-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(246, 249, 255, 0.9);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-list__item strong,
+.console-list__item p {
+  margin: 0;
+}
+
+.console-list__item p {
+  color: #6a7894;
+  line-height: 1.6;
+}
+
+.console-detail-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.console-detail-panel h3,
+.console-detail-panel p {
+  margin: 0;
+}
+
+.console-detail-panel p {
+  color: #66758f;
+  line-height: 1.7;
+}
+
+.console-detail-link {
+  color: #2b66ff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.console-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.console-detail-grid div {
+  padding: 15px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-detail-grid dt {
+  margin-bottom: 6px;
+  color: #738099;
+}
+
+.console-detail-grid dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.console-detail-split {
+  display: grid;
+  gap: 16px;
+}
+
+.console-studio-detail-shell {
+  gap: 16px;
+}
+
+.console-studio-detail-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(247, 250, 255, 0.92);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  align-items: end;
+}
+
+.console-studio-inline-field {
+  display: grid;
+  gap: 8px;
+  min-width: 180px;
+  color: #53627d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.console-studio-inline-field input {
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(24, 35, 58, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0 14px;
+  color: #1a2741;
+}
+
+.console-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(10px);
+}
+
+.console-modal {
+  width: min(1180px, calc(100vw - 56px));
+  max-height: calc(100vh - 56px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 28px;
+  border: 1px solid rgba(24, 35, 58, 0.1);
+  background: rgba(252, 253, 255, 0.98);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.console-modal--studio {
+  width: min(1240px, calc(100vw - 56px));
+}
+
+.console-modal--withdraw {
+  width: min(720px, calc(100vw - 48px));
+}
+
+.console-modal--order {
+  width: min(1120px, calc(100vw - 56px));
+}
+
+.console-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.92);
+}
+
+.console-modal__header--accent {
+  background:
+    radial-gradient(circle at top right, rgba(20, 184, 166, 0.16), transparent 34%),
+    linear-gradient(135deg, #f7fbff 0%, #ecfdf5 100%);
+}
+
+.console-modal__header p {
+  margin: 6px 0 0;
+  color: #5d6f8b;
+  font-weight: 700;
+}
+
+.console-modal__header h3 {
+  margin: 4px 0 0;
+  font-size: 28px;
+}
+
+.console-modal__eyebrow {
+  color: #5d6f8b;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.console-modal__body {
+  overflow: auto;
+  padding: 22px 24px 26px;
+}
+
+.withdraw-review-dialog {
+  display: grid;
+  gap: 18px;
+}
+
+.withdraw-review-dialog__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgba(20, 184, 166, 0.22);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.98), rgba(240, 249, 255, 0.98));
+}
+
+.withdraw-review-dialog__hero div {
+  display: grid;
+  gap: 6px;
+}
+
+.withdraw-review-dialog__hero span,
+.withdraw-review-dialog__item span,
+.withdraw-review-dialog__reason {
+  color: #5f6f86;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.withdraw-review-dialog__hero strong {
+  color: #0f172a;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.withdraw-review-dialog__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.withdraw-review-dialog__item {
+  display: grid;
+  gap: 7px;
+  padding: 14px 16px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.withdraw-review-dialog__item--wide {
+  grid-column: 1 / -1;
+}
+
+.withdraw-review-dialog__item strong {
+  color: #17233d;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.withdraw-review-dialog__qrcode {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.withdraw-review-dialog__qrcode span {
+  color: #5f6f86;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.withdraw-review-dialog__qrcode a {
+  display: block;
+  width: min(260px, 100%);
+}
+
+.withdraw-review-dialog__qrcode img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(24, 35, 58, 0.1);
+  border-radius: 16px;
+  object-fit: contain;
+  background: #f8fafc;
+}
+
+.withdraw-review-dialog__qrcode strong {
+  color: #8a96a8;
+  font-size: 14px;
+}
+
+.withdraw-review-dialog__reason {
+  display: grid;
+  gap: 8px;
+}
+
+.withdraw-review-dialog__reason textarea {
+  width: 100%;
+  min-height: 110px;
+  border: 1px solid rgba(24, 35, 58, 0.14);
+  border-radius: 16px;
+  padding: 12px 14px;
+  font: inherit;
+  resize: vertical;
+  background: #fff;
+}
+
+.withdraw-review-dialog__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.withdraw-review-dialog__actions .dt-button {
+  min-height: 48px;
+}
+
+.console-profile-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-profile-form h4 {
+  margin: 0;
+}
+
+.console-studio-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-profile-form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+  color: #1f2d4d;
+}
+
+.console-profile-form input,
+.console-profile-form select,
+.console-profile-form textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(24, 35, 58, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 12px 14px;
+  font: inherit;
+  resize: vertical;
+}
+
+.console-checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 10px !important;
+}
+
+.console-checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+.console-checkbox span {
+  font-weight: 500;
+  color: #4c5e79;
+}
+
+.console-card-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(248, 251, 255, 0.92);
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.console-card-list__item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(69, 120, 255, 0.18);
+  background: rgba(244, 248, 255, 0.96);
+}
+
+.console-card-list__item.is-active {
+  border-color: rgba(69, 120, 255, 0.32);
+  box-shadow: 0 10px 28px rgba(69, 120, 255, 0.1);
+}
+
+.console-card-list__item strong,
+.console-card-list__item p,
+.console-card-list__item small {
+  display: block;
+  margin: 0;
+}
+
+.console-card-list__item p {
+  margin-top: 6px;
+  color: #6d7a95;
+}
+
+.console-card-list__item small {
+  margin-top: 10px;
+  color: #7a879f;
+}
+
+.console-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.console-role-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.console-actions--inline {
+  margin-bottom: 16px;
+}
+
+.console-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(247, 250, 255, 0.88);
+}
+
+.console-list-toolbar__checkbox,
+.console-card-list__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #53637e;
+}
+
+.console-list-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.console-card-list__check {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.console-inline-notice {
+  margin: 0 0 14px;
+  border-radius: 14px;
+  background: rgba(210, 237, 255, 0.72);
+  color: #0f3d5d;
+  padding: 12px 14px;
+}
+
+.console-support-toolbar,
+.console-config-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.console-support-toolbar label,
+.console-config-form label {
+  display: grid;
+  gap: 8px;
+  color: #36516b;
+  font-size: 13px;
+}
+
+.console-support-toolbar input,
+.console-support-toolbar select,
+.console-config-form input {
+  width: 100%;
+}
+
+.console-support-toolbar__actions,
+.console-support-summary,
+.console-support-composer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.console-support-workbench {
+  align-items: stretch;
+  grid-template-columns: minmax(360px, 0.85fr) minmax(720px, 1.35fr);
+  min-height: 0;
+  height: calc(100vh - 140px);
+}
+
+.console-support-workbench > .dt-card {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.console-operation-page {
+  display: grid;
+  gap: 18px;
+}
+
+.console-operation-page__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 26px;
+  border-radius: 28px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: linear-gradient(135deg, rgba(247, 251, 255, 0.98), rgba(240, 254, 251, 0.96));
+  box-shadow: 0 16px 40px rgba(17, 34, 68, 0.05);
+}
+
+.console-operation-page__copy {
+  display: grid;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.console-operation-page__eyebrow {
+  margin: 0;
+  color: #5f718d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.console-operation-page__copy h3 {
+  margin: 0;
+  color: #13243d;
+  font-size: 34px;
+  line-height: 1.08;
+}
+
+.console-operation-page__copy p:last-child {
+  margin: 0;
+  color: #627089;
+  line-height: 1.7;
+}
+
+.console-operation-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.console-operation-page__overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.console-operation-page__overview-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(249, 251, 255, 0.96);
+  box-shadow: 0 14px 30px rgba(17, 34, 68, 0.04);
+}
+
+.console-operation-page__overview-card span {
+  color: #66758f;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.console-operation-page__overview-card strong {
+  color: #15233d;
+  font-size: 30px;
+  line-height: 1.04;
+}
+
+.console-operation-page__overview-card small {
+  color: #72809a;
+  line-height: 1.55;
+}
+
+.console-operation-overview {
+  display: grid;
+  gap: 18px;
+}
+
+.console-operation-overview__copy {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: linear-gradient(180deg, rgba(246, 252, 251, 0.98), rgba(240, 248, 255, 0.92));
+}
+
+.console-operation-overview__copy h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.console-operation-overview__copy p:last-child {
+  margin: 0;
+  color: #64748b;
+}
+
+.console-operation-overview__eyebrow,
+.console-operation-column__head p,
+.console-operation-config__eyebrow,
+.console-operation-config__panel-head p {
+  margin: 0;
+  color: #5f718d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.console-operation-workspace {
+  align-items: start;
+}
+
+.console-operation-switcher {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-operation-switcher__item {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  color: #24324f;
+  cursor: pointer;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.console-operation-switcher__item strong {
+  font-size: 16px;
+}
+
+.console-operation-switcher__item span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.console-operation-switcher__item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(28, 198, 176, 0.2);
+  box-shadow: 0 14px 28px rgba(25, 40, 72, 0.08);
+}
+
+.console-operation-switcher__item.is-active {
+  border-color: rgba(28, 198, 176, 0.32);
+  background: linear-gradient(180deg, rgba(240, 254, 251, 0.96), rgba(248, 252, 255, 0.98));
+  box-shadow: 0 18px 34px rgba(28, 198, 176, 0.1);
+}
+
+.console-operation-column {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.console-operation-column--list,
+.console-operation-column--editor {
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(249, 251, 255, 0.9);
+}
+
+.console-operation-column__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(24, 35, 58, 0.08);
+}
+
+.console-operation-column__head h4,
+.console-operation-config__panel-head h4 {
+  margin: 4px 0 0;
+  font-size: 21px;
+}
+
+.console-operation-column__head span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.console-operation-column .console-card-list,
+.console-operation-column .console-operation-editor {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.console-operation-column .console-list-toolbar {
+  margin-bottom: 14px;
+}
+
+.console-operation-config {
+  display: grid;
+  gap: 18px;
+}
+
+.console-operation-config__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: linear-gradient(135deg, rgba(236, 254, 255, 0.94), rgba(248, 252, 255, 0.96));
+}
+
+.console-operation-config__hero h3 {
+  margin: 8px 0;
+  font-size: 26px;
+}
+
+.console-operation-config__hero p:last-child {
+  margin: 0;
+  color: #5f718d;
+}
+
+.console-operation-config__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.console-operation-config__stat {
+  padding: 16px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  display: grid;
+  gap: 10px;
+}
+
+.console-operation-config__stat span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.console-operation-config__stat strong {
+  color: #15233d;
+  font-size: 24px;
+}
+
+.console-operation-config__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.console-operation-config__panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  background: rgba(249, 251, 255, 0.9);
+}
+
+.console-operation-config__panel-head {
+  display: grid;
+  gap: 12px;
+}
+
+.console-operation-config__toggles {
+  display: grid;
+  gap: 10px;
+}
+
+.console-operation-config__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.console-support-list {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.console-support-list__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid rgba(24, 35, 58, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.console-support-list__item strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.console-support-list__unread {
+  display: inline-flex;
+  min-width: 10px;
+  height: 10px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+}
+
+.console-support-list__unread:not(:empty) {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+}
+
+.console-support-list__item.is-active {
+  border-color: rgba(13, 148, 136, 0.32);
+  box-shadow: 0 18px 32px rgba(15, 51, 74, 0.12);
+}
+
+.console-support-detail {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.console-support-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.console-support-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.console-support-facts__item {
+  border-radius: 12px;
+  background: rgba(244, 248, 252, 0.92);
+  padding: 9px 11px;
+}
+
+.console-support-facts__item span {
+  display: block;
+  color: #6a7f94;
+  font-size: 12px;
+}
+
+.console-support-messages {
+  display: grid;
+  min-height: 360px;
+  flex: 1;
+  gap: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.console-support-message {
+  border-radius: 14px;
+  background: rgba(244, 248, 252, 0.92);
+  padding: 11px 13px;
+}
+
+.console-support-message.is-mine {
+  background: rgba(223, 245, 234, 0.92);
+}
+
+.console-support-message__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #6a7f94;
+  font-size: 12px;
+}
+
+.console-support-message__image {
+  display: block;
+  width: min(320px, 100%);
+  margin-top: 10px;
+}
+
+.console-support-message__image img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  border: 1px solid rgba(24, 35, 58, 0.1);
+  border-radius: 14px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.console-support-message__file {
+  display: inline-flex;
+  margin-top: 10px;
+  color: #1d5fd6;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.console-order-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.console-modal--order .console-order-detail {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+}
+
+.console-modal--order .console-support-meta,
+.console-modal--order .console-support-facts,
+.console-modal--order .console-order-progress {
+  grid-column: 1 / -1;
+}
+
+.console-order-progress {
+  display: grid;
+  gap: 12px;
+}
+
+.console-order-progress__step {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.console-order-progress__step > span {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border: 2px solid rgba(38, 92, 219, 0.28);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.console-order-progress__step.is-done > span {
+  border-color: rgba(34, 170, 112, 0.85);
+  background: #22aa70;
+}
+
+.console-order-progress__step.is-current > span {
+  border-color: rgba(245, 158, 11, 0.9);
+  background: #f59e0b;
+}
+
+.console-order-progress__step strong {
+  display: block;
+  color: #17233c;
+  font-size: 14px;
+}
+
+.console-order-progress__step p,
+.console-order-progress__step time,
+.console-order-section__hint {
+  margin: 2px 0 0;
+  color: #6a7f94;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.console-order-sections {
+  display: grid;
+  gap: 14px;
+}
+
+.console-modal--order .console-order-sections {
+  align-content: start;
+}
+
+.console-order-section {
+  display: grid;
+  gap: 10px;
+}
+
+.console-order-section h4 {
+  margin: 0;
+  color: #17233c;
+  font-size: 14px;
+}
+
+.console-order-section__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.console-order-section__item {
+  min-width: 0;
+  border-radius: 14px;
+  background: rgba(244, 248, 252, 0.92);
+  padding: 10px 12px;
+}
+
+.console-order-section__item span {
+  display: block;
+  color: #6a7f94;
+  font-size: 12px;
+}
+
+.console-order-section__item strong {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: #17233c;
+  font-size: 13px;
+}
+
+.console-order-messages {
+  max-height: 360px;
+}
+
+.console-modal--order .console-order-messages {
+  max-height: 520px;
+}
+
+.console-support-composer {
+  display: grid;
+  gap: 8px;
+}
+
+.console-support-composer textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.console-config-toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.console-config-toggle--wide {
+  align-items: flex-start;
+}
+
+.console-config-form--stacked {
+  grid-template-columns: 1fr;
+}
+
+.console-config-form--single {
+  grid-template-columns: 1fr;
+}
+
+.console-config-form label span {
+  color: #6f7f91;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 880px) {
+  .console-support-toolbar,
+  .console-config-form,
+  .console-support-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .console-operation-page__overview,
+  .console-operation-config__hero,
+  .console-operation-config__grid,
+  .console-operation-config__stats,
+  .console-operation-switcher {
+    grid-template-columns: 1fr;
+  }
+
+  .console-operation-page__hero,
+  .console-operation-column__head {
+    flex-direction: column;
+  }
+
+  .console-operation-page__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .console-support-toolbar__actions,
+  .console-support-composer__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 1240px) {
+  .console-shell,
+  .console-grid,
+  .console-grid--detail,
+  .console-listing-review-layout,
+  .console-metrics,
+  .console-studio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .console-listing-review-layout {
+    height: auto;
+  }
+
+  .console-listing-review-pane {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 880px) {
+  body {
+    overflow: auto;
+  }
+
+  .console-shell {
+    height: auto;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .console-sidebar {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(24, 35, 58, 0.08);
+    padding-bottom: 18px;
+    overflow: visible;
+  }
+
+  .console-menu {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .console-main {
+    padding: 18px;
+    overflow: visible;
+  }
+
+  .console-hero,
+  .console-actions,
+  .console-detail,
+  .console-detail__facts,
+  .console-listing-detail__hero,
+  .console-modal--order .console-order-detail,
+  .console-order-section__grid,
+  .console-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .console-hero {
+    flex-direction: column;
+  }
+
+  .console-actions {
+    width: 100%;
+  }
+
+  .console-modal-backdrop {
+    padding: 16px;
+  }
+
+  .console-modal,
+  .console-modal--studio {
+    width: min(100vw - 32px, 1240px);
+    max-height: calc(100vh - 32px);
+  }
+
+  .console-modal__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .console-modal__body {
+    padding: 18px;
+  }
+
+  .console-actions .dt-button {
+    width: 100%;
+  }
+
+  .console-filter-row {
+    padding: 14px;
+  }
+
+  .console-status-block .dt-status-state,
+  .console-status-block--compact .dt-status-state {
+    min-height: 0;
+    padding: 20px 18px;
+  }
+
+  .console-filter-row .dt-button {
+    width: 100%;
+  }
+
+  .console-user-panel__actions {
+    flex-direction: column;
+  }
+
+  .console-user-panel__actions .dt-button {
+    width: 100%;
+  }
+
+  .console-profile-form .dt-button {
+    width: 100%;
+  }
+
+  .console-role-editor__grid,
+  .console-role-editor__permission-list,
+  .console-role-editor__member-list,
+  .console-operation-editor__grid,
+  .console-operation-editor__asset,
+  .console-gun-code-grid,
+  .console-gun-code-summary,
+  .console-gun-code-preview-metrics,
+  .console-gun-code-existing-list,
+  .console-studio-form-grid,
+  .console-studio-review-grid,
+  .console-studio-card__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .console-user-detail,
+  .console-user-detail__facts,
+  .console-user-kpis,
+  .console-user-detail__blocks,
+  .console-user-detail__lists {
+    grid-template-columns: 1fr;
+  }
+
+  .console-role-editor__members-head,
+  .console-role-editor__members-tools,
+  .console-role-editor__permission-group-head,
+  .console-list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .console-list-toolbar__actions {
+    flex-direction: column;
+  }
+
+  .console-list-toolbar__actions .dt-button {
+    width: 100%;
+  }
+
+  .console-card-list__item,
+  .console-studio-card__footer,
+  .console-studio-detail-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .console-operation-editor__asset img,
+  .console-operation-editor__placeholder {
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .console-gun-code-header {
+    flex-direction: column;
+  }
+
+  .console-gun-code-hero {
+    flex-direction: column;
+  }
+
+  .console-operation-editor__actions .dt-button {
+    width: 100%;
+  }
+
+  .console-login__actions {
+    justify-content: stretch;
+  }
+}

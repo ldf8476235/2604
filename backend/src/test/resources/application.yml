@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/player?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:change-me}
+    driver-class-name: ${MYSQL_DRIVER:com.mysql.cj.jdbc.Driver}
+  redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:change-me}
+    database: ${REDIS_DB:0}
+  sql:
+    init:
+      mode: always
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+platform:
+  sms:
+    provider: pnvs
+    enabled: true
+    mock-mode: true
+    pnvs:
+      sign-name: test
+      template-code: test-template
+      scheme-name: test-scheme
+      valid-minutes: 15
+      interval-seconds: 60
+  wechat:
+    open:
+      enabled: true
+      mock-mode: true
+      app-id: test-appid
+      app-secret: test-secret
+      redirect-uri: https://example.com/api/auth/wechat/callback
+      scope: snsapi_login
+  auth:
+    seed-demo-users: true

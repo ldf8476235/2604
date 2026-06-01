@@ -1,0 +1,19 @@
+{
+  "name": "delta-trade-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @delta/web",
+    "dev:admin": "npm run dev -w @delta/admin",
+    "dev:studio": "npm run dev -w @delta/studio",
+    "build:web": "npm run build -w @delta/web",
+    "build:admin": "npm run build -w @delta/admin",
+    "build:studio": "npm run build -w @delta/studio",
+    "build:frontends": "npm run build:web && npm run build:admin && npm run build:studio"
+  }
+}
+

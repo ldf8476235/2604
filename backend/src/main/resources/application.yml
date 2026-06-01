@@ -1,0 +1,106 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: delta-trade-platform
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://1Panel-mysql-gNZp:3306/player?useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:change-me}
+    driver-class-name: ${MYSQL_DRIVER:com.mysql.cj.jdbc.Driver}
+  redis:
+    host: ${REDIS_HOST:1Panel-redis-CPU3}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:change-me}
+    database: ${REDIS_DB:0}
+  sql:
+    init:
+      mode: always
+  main:
+    allow-bean-definition-overriding: true
+  jackson:
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+platform:
+  sms:
+    provider: tencent
+    enabled: true
+    mock-mode: false
+    debug-return-verify-code: false
+    pnvs:
+      endpoint: ${SMS_PNVS_ENDPOINT:dypnsapi.aliyuncs.com}
+      access-key-id: ${SMS_PNVS_ACCESS_KEY_ID:}
+      access-key-secret: ${SMS_PNVS_ACCESS_KEY_SECRET:}
+      sign-name: ${SMS_PNVS_SIGN_NAME:}
+      template-code: ${SMS_PNVS_TEMPLATE_CODE:}
+      scheme-name: ${SMS_PNVS_SCHEME_NAME:}
+      country-code: ${SMS_PNVS_COUNTRY_CODE:86}
+      valid-minutes: ${SMS_VALID_MINUTES:15}
+      interval-seconds: ${SMS_INTERVAL_SECONDS:60}
+    tencent:
+      endpoint: ${TENCENT_SMS_ENDPOINT:sms.tencentcloudapi.com}
+      region: ${TENCENT_SMS_REGION:ap-guangzhou}
+      secret-id: ${TENCENT_SMS_SECRET_ID:}
+      secret-key: ${TENCENT_SMS_SECRET_KEY:}
+      app-id: ${TENCENT_SMS_APPID:}
+      sign-name: ${TENCENT_SMS_SIGN:}
+      template-id: ${TENCENT_SMS_TEMPLATE_ID:}
+      valid-minutes: ${SMS_VALID_MINUTES:15}
+      interval-seconds: ${SMS_INTERVAL_SECONDS:60}
+  wechat:
+    open:
+      enabled: true
+      mock-mode: false
+      app-id: ${WECHAT_OPEN_APP_ID:}
+      app-secret: ${WECHAT_OPEN_APP_SECRET:}
+      redirect-uri: ${WECHAT_OPEN_REDIRECT_URI:https://example.com/api/auth/wechat/callback}
+      scope: ${WECHAT_OPEN_SCOPE:snsapi_userinfo}
+    pay:
+      enabled: true
+      mock-mode: false
+      app-id: ${WECHAT_PAY_APP_ID:}
+      mch-id: ${WECHAT_PAY_MCH_ID:}
+      merchant-serial-number: ${WECHAT_PAY_MERCHANT_SERIAL_NUMBER:}
+      api-v3-key: ${WECHAT_PAY_API_V3_KEY:}
+      private-key-path: ${WECHAT_PAY_PRIVATE_KEY_PATH:classpath:certs/wechat/apiclient_key.pem}
+      notify-url: ${WECHAT_PAY_NOTIFY_URL:https://example.com/api/payments/wechat/notify}
+  auth:
+    seed-demo-users: ${AUTH_SEED_DEMO_USERS:false}
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:4173,http://localhost:4174,http://localhost:4175,http://127.0.0.1:4173,http://127.0.0.1:4174,http://127.0.0.1:4175,http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:5175
+  oss:
+    enabled: ${OSS_ENABLED:true}
+    endpoint: ${OSS_ENDPOINT:https://oss-cn-hangzhou.aliyuncs.com}
+    bucket: ${OSS_BUCKET:xue-kehu-aliyun}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    public-base-url: ${OSS_PUBLIC_BASE_URL:https://xue-kehu-aliyun.oss-cn-hangzhou.aliyuncs.com}
+    root-path: delta-trade
+    preview-expire-seconds: ${OSS_PREVIEW_EXPIRE_SECONDS:900}
+  boosting:
+    password-secret: ${BOOSTING_PASSWORD_SECRET:delta-trade-boosting-password-secret}
+  distribution:
+    secret: ${DISTRIBUTION_SECRET:delta-trade-distribution-secret}
+
+logging:
+  config: classpath:logback-spring.xml
