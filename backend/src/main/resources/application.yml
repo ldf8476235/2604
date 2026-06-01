@@ -84,6 +84,14 @@ platform:
       api-v3-key: ${WECHAT_PAY_API_V3_KEY:}
       private-key-path: ${WECHAT_PAY_PRIVATE_KEY_PATH:classpath:certs/wechat/apiclient_key.pem}
       notify-url: ${WECHAT_PAY_NOTIFY_URL:https://example.com/api/payments/wechat/notify}
+  juhe:
+    face:
+      enabled: ${JUHE_FACE_ENABLED:true}
+      app-key: ${JUHE_FACE_APP_KEY:}
+      model: ${JUHE_FACE_MODEL:1}
+      return-url: ${JUHE_FACE_RETURN_URL:https://example.com/profile?tab=verify&faceReturn=1}
+      notify-url: ${JUHE_FACE_NOTIFY_URL:https://example.com/api/auth/real-name/face/notify}
+      device-type: ${JUHE_FACE_DEVICE_TYPE:H5}
   auth:
     seed-demo-users: ${AUTH_SEED_DEMO_USERS:false}
   cors:

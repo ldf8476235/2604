@@ -157,6 +157,39 @@ public class AuthController {
         );
     }
 
+    @PostMapping("/real-name/face/start")
+    public ApiResponse<AuthService.FaceRealNameStartResult> startFaceRealName(@Valid @RequestBody StartFaceRealNameRequest request) {
+        return ApiResponse.success(
+            authService.startFaceRealName(
+                AuthContext.requirePrincipal().getToken(),
+                AuthContext.requirePrincipal().getUserId(),
+                request.getRealName(),
+                request.getIdCardNo()
+            ),
+            MDC.get("traceId")
+        );
+    }
+
+    @PostMapping("/real-name/face/status")
+    public ApiResponse<AuthService.RealNameProfile> checkFaceRealNameStatus(@Valid @RequestBody FaceRealNameStatusRequest request) {
+        return ApiResponse.success(
+            authService.checkFaceRealNameStatus(
+                AuthContext.requirePrincipal().getToken(),
+                AuthContext.requirePrincipal().getUserId(),
+                request.getOrderId()
+            ),
+            MDC.get("traceId")
+        );
+    }
+
+    @PostMapping("/real-name/face/notify")
+    public ApiResponse<AuthService.SimpleResult> notifyFaceRealName(
+        @RequestParam Map<String, String> params,
+        @RequestBody(required = false) String body
+    ) {
+        return ApiResponse.success(authService.handleFaceNotify(params, body), MDC.get("traceId"));
+    }
+
     @GetMapping("/settings")
     public ApiResponse<AuthService.SettingsProfile> settingsProfile() {
         return ApiResponse.success(authService.getSettingsProfile(AuthContext.requirePrincipal().getUserId()), MDC.get("traceId"));
@@ -704,6 +737,43 @@ public class AuthController {
 
         public void setIdCardBackKey(String idCardBackKey) {
             this.idCardBackKey = idCardBackKey;
+        }
+    }
+
+    public static class StartFaceRealNameRequest {
+        @NotBlank(message = "姓名不能为空")
+        private String realName;
+
+        @Pattern(regexp = "^\\d{17}[0-9Xx]$", message = "请输入 18 位身份证号")
+        private String idCardNo;
+
+        public String getRealName() {
+            return realName;
+        }
+
+        public void setRealName(String realName) {
+            this.realName = realName;
+        }
+
+        public String getIdCardNo() {
+            return idCardNo;
+        }
+
+        public void setIdCardNo(String idCardNo) {
+            this.idCardNo = idCardNo;
+        }
+    }
+
+    public static class FaceRealNameStatusRequest {
+        @Pattern(regexp = "^[A-Za-z0-9]{8,32}$", message = "认证订单号格式不正确")
+        private String orderId;
+
+        public String getOrderId() {
+            return orderId;
+        }
+
+        public void setOrderId(String orderId) {
+            this.orderId = orderId;
         }
     }
 

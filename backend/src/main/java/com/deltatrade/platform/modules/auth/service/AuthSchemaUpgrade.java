@@ -22,6 +22,7 @@ public class AuthSchemaUpgrade {
     @PostConstruct
     public void ensureAuthColumns() {
         ensurePhoneNullable();
+        ensureFaceSessionTable();
         ensureColumn("avatar_key", "ALTER TABLE auth_user ADD COLUMN avatar_key VARCHAR(255) NULL");
         ensureColumn("real_name", "ALTER TABLE auth_user ADD COLUMN real_name VARCHAR(64) NULL");
         ensureColumn("real_name_phone", "ALTER TABLE auth_user ADD COLUMN real_name_phone VARCHAR(20) NULL");
@@ -32,6 +33,28 @@ public class AuthSchemaUpgrade {
         ensureColumn("real_name_back_key", "ALTER TABLE auth_user ADD COLUMN real_name_back_key VARCHAR(255) NULL");
         ensureColumn("login_alert_enabled", "ALTER TABLE auth_user ADD COLUMN login_alert_enabled BOOLEAN NOT NULL DEFAULT TRUE");
         ensureColumn("secondary_verify_enabled", "ALTER TABLE auth_user ADD COLUMN secondary_verify_enabled BOOLEAN NOT NULL DEFAULT FALSE");
+    }
+
+    private void ensureFaceSessionTable() {
+        long startAt = System.currentTimeMillis();
+        jdbcTemplate.execute(
+            "CREATE TABLE IF NOT EXISTS real_name_face_session (" +
+                "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
+                "user_id BIGINT NOT NULL," +
+                "order_id VARCHAR(32) NOT NULL UNIQUE," +
+                "jh_order_id VARCHAR(64) NULL UNIQUE," +
+                "real_name VARCHAR(64) NOT NULL," +
+                "id_card_no VARCHAR(64) NOT NULL," +
+                "status VARCHAR(32) NOT NULL," +
+                "fail_reason VARCHAR(255) NULL," +
+                "provider VARCHAR(32) NOT NULL DEFAULT 'JUHE_FACE_H5'," +
+                "raw_result TEXT NULL," +
+                "created_at DATETIME NOT NULL," +
+                "updated_at DATETIME NOT NULL," +
+                "completed_at DATETIME NULL" +
+                ")"
+        );
+        log.info("mysql ddl success target=real_name_face_session costMs={}", System.currentTimeMillis() - startAt);
     }
 
     private void ensurePhoneNullable() {

@@ -5,11 +5,15 @@ import com.deltatrade.platform.common.exception.BusinessException;
 import com.deltatrade.platform.common.exception.ErrorCode;
 import com.deltatrade.platform.modules.auth.config.PlatformSmsProperties;
 import com.deltatrade.platform.modules.auth.mapper.AuthUserMapper;
+import com.deltatrade.platform.modules.auth.mapper.RealNameFaceSessionMapper;
 import com.deltatrade.platform.modules.auth.model.AuthUserDO;
+import com.deltatrade.platform.modules.auth.model.RealNameFaceSessionDO;
 import com.deltatrade.platform.modules.oss.service.OssStorageService;
 import com.deltatrade.platform.modules.profile.mapper.WithdrawAccountMapper;
 import com.deltatrade.platform.modules.profile.model.WithdrawAccountDO;
 import com.deltatrade.platform.modules.profile.service.DistributionService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -23,6 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -33,8 +39,11 @@ public class AuthService {
     private static final int VERIFY_TICKET_MINUTES = 10;
     private static final int WECHAT_QR_EXPIRE_MINUTES = 5;
     private static final int WECHAT_POLL_INTERVAL_SECONDS = 5;
+    private static final int FACE_VERIFY_EXPIRE_MINUTES = 30;
+    private static final DateTimeFormatter FACE_ORDER_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final AuthUserMapper authUserMapper;
+    private final RealNameFaceSessionMapper realNameFaceSessionMapper;
     private final AuthRedisStore authRedisStore;
     private final PnvsSmsVerificationService smsVerificationService;
     private final WechatOpenGateway wechatOpenGateway;
@@ -42,11 +51,14 @@ public class AuthService {
     private final WithdrawAccountMapper withdrawAccountMapper;
     private final OssStorageService ossStorageService;
     private final RealNameVerificationService realNameVerificationService;
+    private final JuheFaceGateway juheFaceGateway;
+    private final ObjectMapper objectMapper;
     private final DistributionService distributionService;
     private final boolean seedDemoUsersEnabled;
 
     public AuthService(
         AuthUserMapper authUserMapper,
+        RealNameFaceSessionMapper realNameFaceSessionMapper,
         AuthRedisStore authRedisStore,
         PnvsSmsVerificationService smsVerificationService,
         WechatOpenGateway wechatOpenGateway,
@@ -54,10 +66,13 @@ public class AuthService {
         WithdrawAccountMapper withdrawAccountMapper,
         OssStorageService ossStorageService,
         RealNameVerificationService realNameVerificationService,
+        JuheFaceGateway juheFaceGateway,
+        ObjectMapper objectMapper,
         DistributionService distributionService,
         @Value("${platform.auth.seed-demo-users:false}") boolean seedDemoUsersEnabled
     ) {
         this.authUserMapper = authUserMapper;
+        this.realNameFaceSessionMapper = realNameFaceSessionMapper;
         this.authRedisStore = authRedisStore;
         this.smsVerificationService = smsVerificationService;
         this.wechatOpenGateway = wechatOpenGateway;
@@ -65,6 +80,8 @@ public class AuthService {
         this.withdrawAccountMapper = withdrawAccountMapper;
         this.ossStorageService = ossStorageService;
         this.realNameVerificationService = realNameVerificationService;
+        this.juheFaceGateway = juheFaceGateway;
+        this.objectMapper = objectMapper;
         this.distributionService = distributionService;
         this.seedDemoUsersEnabled = seedDemoUsersEnabled;
     }
@@ -532,6 +549,78 @@ public class AuthService {
         );
     }
 
+    public FaceRealNameStartResult startFaceRealName(String token, Long userId, String realName, String idCardNo) {
+        AuthUserDO user = requireUserById(userId);
+        if (Boolean.TRUE.equals(user.getVerified())) {
+            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "实名认证已完成，暂不支持修改");
+        }
+
+        String normalizedRealName = realName == null ? "" : realName.trim();
+        String normalizedIdCardNo = idCardNo == null ? "" : idCardNo.trim().toUpperCase();
+        RealNameVerificationService.VerificationResult localResult = realNameVerificationService.verify(normalizedRealName, normalizedIdCardNo);
+        if (!localResult.isPassed()) {
+            throw new BusinessException(ErrorCode.BUSINESS_ERROR, localResult.getReason());
+        }
+
+        String orderId = buildFaceOrderId();
+        JuheFaceGateway.StartResult startResult = juheFaceGateway.startVerification(normalizedRealName, normalizedIdCardNo, orderId);
+        if (startResult.getErrorCode() != 0 || !StringUtils.hasText(startResult.getJhOrderId()) || !StringUtils.hasText(startResult.getVerifyUrl())) {
+            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "实名认证发起失败：" + defaultText(startResult.getReason(), "聚合服务未返回认证链接"));
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        RealNameFaceSessionDO session = new RealNameFaceSessionDO();
+        session.setUserId(userId);
+        session.setOrderId(orderId);
+        session.setJhOrderId(startResult.getJhOrderId());
+        session.setRealName(normalizedRealName);
+        session.setIdCardNo(normalizedIdCardNo);
+        session.setStatus("PENDING");
+        session.setFailReason(null);
+        session.setProvider("JUHE_FACE_H5");
+        session.setRawResult(startResult.getRawResult());
+        session.setCreatedAt(now);
+        session.setUpdatedAt(now);
+        insertFaceSession(session);
+
+        user.setRealName(normalizedRealName);
+        user.setRealNamePhone(StringUtils.hasText(user.getPhone()) ? user.getPhone() : null);
+        user.setIdCardNo(normalizedIdCardNo);
+        user.setVerified(false);
+        user.setRealNameStatus("UNVERIFIED");
+        user.setRealNameRejectReason(null);
+        user.setUpdatedAt(now);
+        updateUser(user);
+        refreshLoginVerified(token, user);
+        log.info("real name face start success userId={} orderId={} jhOrderId={}",
+            userId, orderId, maskFaceOrderId(startResult.getJhOrderId()));
+        return new FaceRealNameStartResult(orderId, startResult.getJhOrderId(), startResult.getVerifyUrl(), now.plusMinutes(FACE_VERIFY_EXPIRE_MINUTES));
+    }
+
+    public RealNameProfile checkFaceRealNameStatus(String token, Long userId, String orderId) {
+        RealNameFaceSessionDO session = findFaceSessionByOrderId(orderId);
+        if (session == null || !userId.equals(session.getUserId())) {
+            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "实名认证订单不存在");
+        }
+        refreshFaceSessionFromProvider(session, token);
+        return getRealNameProfile(userId);
+    }
+
+    public SimpleResult handleFaceNotify(Map<String, String> params, String body) {
+        String jhOrderId = extractNotifyJhOrderId(params, body);
+        if (!StringUtils.hasText(jhOrderId)) {
+            log.warn("juhe face notify ignored because jhOrderId missing params={} body={}", params == null ? 0 : params.keySet(), body);
+            return new SimpleResult("IGNORED", "缺少聚合订单号");
+        }
+        RealNameFaceSessionDO session = findFaceSessionByJhOrderId(jhOrderId);
+        if (session == null) {
+            log.warn("juhe face notify ignored because session missing jhOrderId={}", maskFaceOrderId(jhOrderId));
+            return new SimpleResult("IGNORED", "认证流水不存在");
+        }
+        refreshFaceSessionFromProvider(session, null);
+        return new SimpleResult("SUCCESS", "认证结果已同步");
+    }
+
     public SettingsProfile getSettingsProfile(Long userId) {
         AuthUserDO user = requireUserById(userId);
         WithdrawAccountDO withdrawAccount = findWithdrawAccount(userId);
@@ -824,6 +913,108 @@ public class AuthService {
         }
     }
 
+    private String buildFaceOrderId() {
+        return "RN" + LocalDateTime.now().format(FACE_ORDER_FORMATTER) + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+    }
+
+    private String buildFaceFailReason(JuheFaceGateway.SearchResult result) {
+        StringBuilder builder = new StringBuilder();
+        appendReason(builder, result.getMessage());
+        appendReason(builder, result.getLiveMessage());
+        appendReason(builder, result.getCertifyMessage());
+        appendReason(builder, result.getReason());
+        return builder.length() == 0 ? "实名认证未通过，请重新发起认证" : builder.toString();
+    }
+
+    private void appendReason(StringBuilder builder, String value) {
+        if (!StringUtils.hasText(value)) {
+            return;
+        }
+        String trimmed = value.trim();
+        if (builder.indexOf(trimmed) >= 0) {
+            return;
+        }
+        if (builder.length() > 0) {
+            builder.append("；");
+        }
+        builder.append(trimmed);
+    }
+
+    private String extractNotifyJhOrderId(Map<String, String> params, String body) {
+        String fromParams = extractJhOrderIdFromParams(params);
+        if (StringUtils.hasText(fromParams)) {
+            return fromParams;
+        }
+        if (!StringUtils.hasText(body)) {
+            return "";
+        }
+        String trimmed = body.trim();
+        if (trimmed.startsWith("{")) {
+            return extractJhOrderIdFromJson(trimmed);
+        }
+        String[] pairs = trimmed.split("&");
+        for (String pair : pairs) {
+            int split = pair.indexOf('=');
+            if (split <= 0) {
+                continue;
+            }
+            String key = pair.substring(0, split);
+            String value = java.net.URLDecoder.decode(pair.substring(split + 1), StandardCharsets.UTF_8);
+            if ("jh_order_id".equals(key) || "jhOrderId".equals(key)) {
+                return value;
+            }
+            if ("response".equals(key)) {
+                String parsed = extractJhOrderIdFromJson(value);
+                if (StringUtils.hasText(parsed)) {
+                    return parsed;
+                }
+            }
+        }
+        return "";
+    }
+
+    private String extractJhOrderIdFromParams(Map<String, String> params) {
+        if (params == null || params.isEmpty()) {
+            return "";
+        }
+        String direct = firstText(params.get("jh_order_id"), params.get("jhOrderId"));
+        if (StringUtils.hasText(direct)) {
+            return direct;
+        }
+        String response = params.get("response");
+        if (StringUtils.hasText(response)) {
+            return extractJhOrderIdFromJson(response);
+        }
+        return "";
+    }
+
+    private String extractJhOrderIdFromJson(String json) {
+        try {
+            JsonNode root = objectMapper.readTree(json);
+            return firstText(
+                root.path("jh_order_id").asText(""),
+                root.path("jhOrderId").asText(""),
+                root.path("result").path("jh_order_id").asText(""),
+                root.path("result").path("jhOrderId").asText("")
+            );
+        } catch (Exception exception) {
+            log.warn("juhe face notify json parse failed body={}", json);
+            return "";
+        }
+    }
+
+    private String firstText(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+        return "";
+    }
+
     private AuthUserDO findUserByPhone(String phone) {
         long startAt = System.currentTimeMillis();
         AuthUserDO user = authUserMapper.selectOne(Wrappers.<AuthUserDO>lambdaQuery().eq(AuthUserDO::getPhone, phone).last("LIMIT 1"));
@@ -852,6 +1043,109 @@ public class AuthService {
         int rows = authUserMapper.updateById(user);
         log.info("mysql update success target=auth_user costMs={} rows={} userId={} phone={}",
             System.currentTimeMillis() - startAt, rows, user.getId(), maskPhone(user.getPhone()));
+    }
+
+    private void insertFaceSession(RealNameFaceSessionDO session) {
+        long startAt = System.currentTimeMillis();
+        int rows = realNameFaceSessionMapper.insert(session);
+        log.info("mysql insert success target=real_name_face_session costMs={} rows={} userId={} orderId={}",
+            System.currentTimeMillis() - startAt, rows, session.getUserId(), session.getOrderId());
+    }
+
+    private void updateFaceSession(RealNameFaceSessionDO session) {
+        long startAt = System.currentTimeMillis();
+        int rows = realNameFaceSessionMapper.updateById(session);
+        log.info("mysql update success target=real_name_face_session costMs={} rows={} userId={} orderId={} status={}",
+            System.currentTimeMillis() - startAt, rows, session.getUserId(), session.getOrderId(), session.getStatus());
+    }
+
+    private RealNameFaceSessionDO findFaceSessionByOrderId(String orderId) {
+        String normalized = orderId == null ? "" : orderId.trim();
+        if (!StringUtils.hasText(normalized)) {
+            return null;
+        }
+        long startAt = System.currentTimeMillis();
+        RealNameFaceSessionDO session = realNameFaceSessionMapper.selectOne(
+            Wrappers.<RealNameFaceSessionDO>lambdaQuery().eq(RealNameFaceSessionDO::getOrderId, normalized).last("LIMIT 1")
+        );
+        log.info("mysql query success target=real_name_face_session_by_order_id costMs={} hit={} orderId={}",
+            System.currentTimeMillis() - startAt, session != null, normalized);
+        return session;
+    }
+
+    private RealNameFaceSessionDO findFaceSessionByJhOrderId(String jhOrderId) {
+        String normalized = jhOrderId == null ? "" : jhOrderId.trim();
+        if (!StringUtils.hasText(normalized)) {
+            return null;
+        }
+        long startAt = System.currentTimeMillis();
+        RealNameFaceSessionDO session = realNameFaceSessionMapper.selectOne(
+            Wrappers.<RealNameFaceSessionDO>lambdaQuery().eq(RealNameFaceSessionDO::getJhOrderId, normalized).last("LIMIT 1")
+        );
+        log.info("mysql query success target=real_name_face_session_by_jh_order_id costMs={} hit={} jhOrderId={}",
+            System.currentTimeMillis() - startAt, session != null, maskFaceOrderId(normalized));
+        return session;
+    }
+
+    private void refreshFaceSessionFromProvider(RealNameFaceSessionDO session, String token) {
+        if ("APPROVED".equals(session.getStatus()) || "REJECTED".equals(session.getStatus())) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (session.getCreatedAt() != null && session.getCreatedAt().plusMinutes(FACE_VERIFY_EXPIRE_MINUTES).isBefore(now)) {
+            completeFaceSession(session, "EXPIRED", "认证链接已过期，请重新发起认证", null, token);
+            return;
+        }
+        JuheFaceGateway.SearchResult searchResult = juheFaceGateway.searchVerification(session.getJhOrderId());
+        if (searchResult.getErrorCode() != 0) {
+            if (isFaceVerificationPending(searchResult.getErrorCode())) {
+                session.setRawResult(searchResult.getRawResult());
+                session.setUpdatedAt(LocalDateTime.now());
+                updateFaceSession(session);
+                log.info("real name face still pending userId={} orderId={} errorCode={}",
+                    session.getUserId(), session.getOrderId(), searchResult.getErrorCode());
+                return;
+            }
+            completeFaceSession(session, "REJECTED", defaultText(searchResult.getReason(), "认证结果查询失败"), searchResult.getRawResult(), token);
+            return;
+        }
+        if (searchResult.isPassed()) {
+            completeFaceSession(session, "APPROVED", null, searchResult.getRawResult(), token);
+            return;
+        }
+        completeFaceSession(session, "REJECTED", buildFaceFailReason(searchResult), searchResult.getRawResult(), token);
+    }
+
+    private void completeFaceSession(RealNameFaceSessionDO session, String status, String failReason, String rawResult, String token) {
+        LocalDateTime now = LocalDateTime.now();
+        session.setStatus(status);
+        session.setFailReason(failReason);
+        if (StringUtils.hasText(rawResult)) {
+            session.setRawResult(rawResult);
+        }
+        session.setUpdatedAt(now);
+        if (!"PENDING".equals(status)) {
+            session.setCompletedAt(now);
+        }
+        updateFaceSession(session);
+
+        AuthUserDO user = requireUserById(session.getUserId());
+        user.setRealName(session.getRealName());
+        user.setRealNamePhone(StringUtils.hasText(user.getPhone()) ? user.getPhone() : user.getRealNamePhone());
+        user.setIdCardNo(session.getIdCardNo());
+        user.setVerified("APPROVED".equals(status));
+        user.setRealNameStatus("APPROVED".equals(status) ? "APPROVED" : "REJECTED");
+        user.setRealNameRejectReason("APPROVED".equals(status) ? null : failReason);
+        user.setUpdatedAt(now);
+        updateUser(user);
+        if (StringUtils.hasText(token)) {
+            refreshLoginVerified(token, user);
+        }
+        log.info("real name face status synced userId={} orderId={} status={}", user.getId(), session.getOrderId(), status);
+    }
+
+    private boolean isFaceVerificationPending(int errorCode) {
+        return errorCode == 279306 || errorCode == 279307;
     }
 
     private boolean hasPassword(AuthUserDO user) {
@@ -1009,6 +1303,13 @@ public class AuthService {
             return "";
         }
         return idCardNo.substring(0, 6) + "********" + idCardNo.substring(idCardNo.length() - 4);
+    }
+
+    private String maskFaceOrderId(String orderId) {
+        if (!StringUtils.hasText(orderId) || orderId.length() < 8) {
+            return safeText(orderId);
+        }
+        return orderId.substring(0, 4) + "****" + orderId.substring(orderId.length() - 4);
     }
 
     private String maskRealName(String realName) {
@@ -1318,6 +1619,36 @@ public class AuthService {
 
         public String getIdCardBackUrl() {
             return idCardBackUrl;
+        }
+    }
+
+    public static class FaceRealNameStartResult {
+        private final String orderId;
+        private final String jhOrderId;
+        private final String verifyUrl;
+        private final LocalDateTime expireAt;
+
+        public FaceRealNameStartResult(String orderId, String jhOrderId, String verifyUrl, LocalDateTime expireAt) {
+            this.orderId = orderId;
+            this.jhOrderId = jhOrderId;
+            this.verifyUrl = verifyUrl;
+            this.expireAt = expireAt;
+        }
+
+        public String getOrderId() {
+            return orderId;
+        }
+
+        public String getJhOrderId() {
+            return jhOrderId;
+        }
+
+        public String getVerifyUrl() {
+            return verifyUrl;
+        }
+
+        public LocalDateTime getExpireAt() {
+            return expireAt;
         }
     }
 

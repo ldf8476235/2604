@@ -1,7 +1,7 @@
 import { Button, StatusState } from "@delta/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { loadRealNameProfile, sendSmsCode, submitRealName, type RealNameProfile } from "../auth/auth-api";
+import { loadFaceRealNameStatus, loadRealNameProfile, sendSmsCode, startFaceRealName, type RealNameProfile } from "../auth/auth-api";
 import { useAuth } from "../auth/auth-context";
 import type { AuthProfile } from "../auth/auth-storage";
 import { uploadOssFileDirect } from "../modules/publish/publish-api";
@@ -69,6 +69,8 @@ type UploadedImageAsset = {
 };
 
 const PROFILE_MENU_SET = new Set<ProfileMenuKey>(PROFILE_MENU_ITEMS.map((item) => item.key));
+const FACE_REAL_NAME_ORDER_KEY = "delta:face-real-name-order-id";
+const FACE_REAL_NAME_POLL_INTERVAL_MS = 3000;
 const MESSAGE_TABS: { key: MessageCategory; label: string }[] = [
   { key: "ALL", label: "全部消息" },
   { key: "SYSTEM", label: "系统公告" },
@@ -134,18 +136,19 @@ export function ProfilePage() {
   const [realNameProfile, setRealNameProfile] = useState<RealNameProfile | null>(null);
   const [realNameLoadStatus, setRealNameLoadStatus] = useState<LoadStatus>("idle");
   const [realNameError, setRealNameError] = useState("");
-  const [realNameForm, setRealNameForm] = useState({ realName: "", phone: "", idCardNo: "" });
+  const [realNameForm, setRealNameForm] = useState({ realName: "", idCardNo: "" });
   const [realNameFieldErrors, setRealNameFieldErrors] = useState<{
     realName?: string;
-    phone?: string;
     idCardNo?: string;
-    idCardFront?: string;
-    idCardBack?: string;
   }>({});
   const [submittingRealName, setSubmittingRealName] = useState(false);
-  const [idCardFrontAsset, setIdCardFrontAsset] = useState<UploadedImageAsset | null>(null);
-  const [idCardBackAsset, setIdCardBackAsset] = useState<UploadedImageAsset | null>(null);
-  const [realNameUploadKey, setRealNameUploadKey] = useState<"front" | "back" | "">("");
+  const [faceQrDialog, setFaceQrDialog] = useState<{
+    orderId: string;
+    verifyUrl: string;
+    expireAt: string;
+    status: "WAITING" | "CHECKING" | "FAILED";
+    message: string;
+  } | null>(null);
 
   const [studioApplicationLoadStatus, setStudioApplicationLoadStatus] = useState<LoadStatus>("idle");
   const [studioApplicationError, setStudioApplicationError] = useState("");
@@ -361,18 +364,8 @@ export function ProfilePage() {
         setRealNameForm((current) => ({
           ...current,
           realName: profile.realName || current.realName,
-          phone: profile.phone || session?.profile.phone || current.phone,
+          idCardNo: current.idCardNo,
         }));
-        setIdCardFrontAsset(profile.idCardFrontUrl ? {
-          objectKey: profile.idCardFrontKey,
-          previewUrl: profile.idCardFrontUrl,
-          filename: "身份证人像面",
-        } : null);
-        setIdCardBackAsset(profile.idCardBackUrl ? {
-          objectKey: profile.idCardBackKey,
-          previewUrl: profile.idCardBackUrl,
-          filename: "身份证国徽面",
-        } : null);
         setRealNameLoadStatus("success");
       })
       .catch((error) => {
@@ -383,7 +376,103 @@ export function ProfilePage() {
     return () => {
       active = false;
     };
-  }, [isAuthenticated, session?.profile.phone]);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || activeMenu !== "verify" || searchParams.get("faceReturn") !== "1") {
+      return;
+    }
+    const orderId = window.sessionStorage.getItem(FACE_REAL_NAME_ORDER_KEY);
+    if (!orderId) {
+      setRealNameError("未找到本次人脸认证订单，请重新发起认证。");
+      return;
+    }
+    let active = true;
+    setSubmittingRealName(true);
+    setRealNameError("");
+    loadFaceRealNameStatus(orderId)
+      .then(async (profile) => {
+        if (!active) return;
+        setRealNameProfile(profile);
+        setRealNameLoadStatus("success");
+        window.sessionStorage.removeItem(FACE_REAL_NAME_ORDER_KEY);
+        if (profile.verified) {
+          syncSessionProfile({ verified: true });
+          setWalletNotice("实名认证已完成，现在可以绑定提现账户并提交提现。");
+          await Promise.all([refreshSettings(), refreshWallet()]);
+          return;
+        }
+        setRealNameError(profile.rejectReason || "实名认证未通过，请重新发起认证。");
+      })
+      .catch((error) => {
+        if (!active) return;
+        setRealNameError(error instanceof Error ? error.message : "实名认证结果查询失败");
+      })
+      .finally(() => {
+        if (active) {
+          setSubmittingRealName(false);
+        }
+      });
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("faceReturn");
+      return next;
+    }, { replace: true });
+    return () => {
+      active = false;
+    };
+  }, [activeMenu, isAuthenticated, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !faceQrDialog || faceQrDialog.status === "FAILED") {
+      return;
+    }
+    let active = true;
+    const timer = window.setInterval(() => {
+      setFaceQrDialog((current) => current ? { ...current, status: "CHECKING", message: "正在等待手机端完成认证..." } : current);
+      loadFaceRealNameStatus(faceQrDialog.orderId)
+        .then(async (profile) => {
+          if (!active) return;
+          setRealNameProfile(profile);
+          setRealNameLoadStatus("success");
+          if (profile.verified) {
+            window.clearInterval(timer);
+            window.sessionStorage.removeItem(FACE_REAL_NAME_ORDER_KEY);
+            setFaceQrDialog(null);
+            setSubmittingRealName(false);
+            syncSessionProfile({ verified: true });
+            setWalletNotice("实名认证已完成，现在可以绑定提现账户并提交提现。");
+            await Promise.all([refreshSettings(), refreshWallet()]);
+            return;
+          }
+          if (profile.status === "REJECTED") {
+            window.clearInterval(timer);
+            window.sessionStorage.removeItem(FACE_REAL_NAME_ORDER_KEY);
+            setSubmittingRealName(false);
+            setRealNameError(profile.rejectReason || "实名认证未通过，请重新发起认证。");
+            setFaceQrDialog((current) => current ? {
+              ...current,
+              status: "FAILED",
+              message: profile.rejectReason || "实名认证未通过，请重新发起认证。",
+            } : current);
+            return;
+          }
+          setFaceQrDialog((current) => current ? { ...current, status: "WAITING", message: "请使用手机扫码完成活体认证。" } : current);
+        })
+        .catch((error) => {
+          if (!active) return;
+          setFaceQrDialog((current) => current ? {
+            ...current,
+            status: "WAITING",
+            message: error instanceof Error ? error.message : "认证结果查询中，请稍候。",
+          } : current);
+        });
+    }, FACE_REAL_NAME_POLL_INTERVAL_MS);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [faceQrDialog?.orderId, faceQrDialog?.status, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -826,10 +915,10 @@ export function ProfilePage() {
               <header className="profile-panel__header">
                 <div>
                   <h2>实名认证</h2>
-                  <p>按你现在的要求收成最短链路：姓名 + 身份证号提交入库，已实名后再次进入直接回显。</p>
+                  <p>填写姓名和身份证号后进入人脸活体认证，认证完成会自动同步实名状态。</p>
                 </div>
                 <span className={`profile-status-badge ${isRealNameVerified ? "profile-status-badge--success" : ""}`}>
-                  {isRealNameVerified ? "已实名" : "待提交"}
+                  {isRealNameVerified ? "已实名" : "待认证"}
                 </span>
               </header>
               {renderRealNamePanel({
@@ -839,71 +928,49 @@ export function ProfilePage() {
                 form: realNameForm,
                 fieldErrors: realNameFieldErrors,
                 submitting: submittingRealName,
-                idCardFrontAsset,
-                idCardBackAsset,
-                uploadKey: realNameUploadKey,
                 onChange: (field, value) => {
                   setRealNameForm((current) => ({ ...current, [field]: value }));
                   setRealNameFieldErrors((current) => ({ ...current, [field]: "" }));
                 },
-                onUpload: async (side, file) => {
-                  try {
-                    validateProfileImageFile(file, side === "front" ? "身份证人像面" : "身份证国徽面");
-                    setRealNameUploadKey(side);
-                    const uploaded = await uploadProfileImage(file, "identity-cards");
-                    if (side === "front") {
-                      setIdCardFrontAsset(uploaded);
-                      setRealNameFieldErrors((current) => ({ ...current, idCardFront: "" }));
-                    } else {
-                      setIdCardBackAsset(uploaded);
-                      setRealNameFieldErrors((current) => ({ ...current, idCardBack: "" }));
-                    }
-                  } catch (error) {
-                    setRealNameError(error instanceof Error ? error.message : "证件图片上传失败");
-                  } finally {
-                    setRealNameUploadKey("");
-                  }
-                },
-                onDeleteAsset: (side) => {
-                  if (side === "front") {
-                    setIdCardFrontAsset(null);
-                    setRealNameFieldErrors((current) => ({ ...current, idCardFront: "" }));
-                  } else {
-                    setIdCardBackAsset(null);
-                    setRealNameFieldErrors((current) => ({ ...current, idCardBack: "" }));
-                  }
-                },
                 onSubmit: async () => {
-                  const nextErrors = validateRealNameForm(realNameForm, idCardFrontAsset, idCardBackAsset);
+                  const nextErrors = validateRealNameForm(realNameForm);
                   setRealNameFieldErrors(nextErrors);
-                  if (nextErrors.realName || nextErrors.phone || nextErrors.idCardNo || nextErrors.idCardFront || nextErrors.idCardBack) {
+                  if (nextErrors.realName || nextErrors.idCardNo) {
                     return;
                   }
 
                   setSubmittingRealName(true);
+                  setRealNameError("");
                   try {
-                    const profile = await submitRealName(
-                      realNameForm.realName,
-                      realNameForm.phone,
-                      realNameForm.idCardNo,
-                      idCardFrontAsset?.objectKey ?? "",
-                      idCardBackAsset?.objectKey ?? "",
-                    );
-                    setRealNameProfile(profile);
-                    setRealNameLoadStatus("success");
-                    if (profile.verified) {
-                      syncSessionProfile({ verified: true });
-                      setWalletNotice("实名认证已完成，现在可以绑定提现账户并提交提现。");
+                    const result = await startFaceRealName(realNameForm.realName, realNameForm.idCardNo);
+                    window.sessionStorage.setItem(FACE_REAL_NAME_ORDER_KEY, result.orderId);
+                    if (isMobileRuntime()) {
+                      window.location.href = result.verifyUrl;
+                      return;
                     }
-                    await Promise.all([refreshSettings(), refreshWallet()]);
+                    setFaceQrDialog({
+                      orderId: result.orderId,
+                      verifyUrl: result.verifyUrl,
+                      expireAt: result.expireAt,
+                      status: "WAITING",
+                      message: "请使用手机扫码完成活体认证。",
+                    });
                   } catch (error) {
-                    setRealNameError(error instanceof Error ? error.message : "实名认证提交失败");
-                  } finally {
+                    setRealNameError(error instanceof Error ? error.message : "实名认证发起失败");
                     setSubmittingRealName(false);
                   }
                 },
               })}
             </section>
+            {faceQrDialog ? (
+              <FaceRealNameQrDialog
+                dialog={faceQrDialog}
+                onClose={() => {
+                  setFaceQrDialog(null);
+                  setSubmittingRealName(false);
+                }}
+              />
+            ) : null}
           </section>
         ) : null}
 
@@ -2208,6 +2275,21 @@ function formatCurrency(amount: number) {
   return `¥${amount.toFixed(2)}`;
 }
 
+function formatDateTime(value: string) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const pad = (input: number) => String(input).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function isMobileRuntime() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  return /Android|iPhone|iPad|iPod|Mobile|MicroMessenger/i.test(navigator.userAgent);
+}
+
 function formatCouponStatus(status: CouponRecord["status"]) {
   if (status === "available") return "可用";
   if (status === "used") return "已使用";
@@ -2229,6 +2311,49 @@ function renderChannelLabel(channel: string | null) {
   return "系统";
 }
 
+function FaceRealNameQrDialog({
+  dialog,
+  onClose,
+}: {
+  dialog: {
+    orderId: string;
+    verifyUrl: string;
+    expireAt: string;
+    status: "WAITING" | "CHECKING" | "FAILED";
+    message: string;
+  };
+  onClose: () => void;
+}) {
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(dialog.verifyUrl)}`;
+  return (
+    <div className="profile-face-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-face-dialog-title">
+      <div className="profile-face-dialog__panel">
+        <button className="profile-face-dialog__close" type="button" onClick={onClose} aria-label="关闭">×</button>
+        <div className="profile-face-dialog__header">
+          <strong id="profile-face-dialog-title">手机扫码认证</strong>
+          <span>{dialog.status === "CHECKING" ? "查询中" : dialog.status === "FAILED" ? "未通过" : "等待认证"}</span>
+        </div>
+        <div className="profile-face-dialog__qr">
+          <img alt="人脸实名认证二维码" src={qrImageUrl} />
+        </div>
+        <p>{dialog.message}</p>
+        <div className="profile-face-dialog__meta">
+          <span>认证单号</span>
+          <strong>{dialog.orderId}</strong>
+        </div>
+        <div className="profile-face-dialog__meta">
+          <span>有效期至</span>
+          <strong>{formatDateTime(dialog.expireAt)}</strong>
+        </div>
+        <div className="profile-face-dialog__actions">
+          <Button kind="secondary" onClick={() => window.open(dialog.verifyUrl, "_blank", "noopener,noreferrer")}>打开认证链接</Button>
+          <Button onClick={onClose}>关闭</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function renderRealNamePanel({
   loadStatus,
   error,
@@ -2236,26 +2361,16 @@ function renderRealNamePanel({
   form,
   fieldErrors,
   submitting,
-  idCardFrontAsset,
-  idCardBackAsset,
-  uploadKey,
   onChange,
-  onUpload,
-  onDeleteAsset,
   onSubmit,
 }: {
   loadStatus: LoadStatus;
   error: string;
   profile: RealNameProfile | null;
-  form: { realName: string; phone: string; idCardNo: string };
-  fieldErrors: { realName?: string; phone?: string; idCardNo?: string; idCardFront?: string; idCardBack?: string };
+  form: { realName: string; idCardNo: string };
+  fieldErrors: { realName?: string; idCardNo?: string };
   submitting: boolean;
-  idCardFrontAsset: UploadedImageAsset | null;
-  idCardBackAsset: UploadedImageAsset | null;
-  uploadKey: "front" | "back" | "";
-  onChange: (field: "realName" | "phone" | "idCardNo", value: string) => void;
-  onUpload: (side: "front" | "back", file: File) => Promise<void>;
-  onDeleteAsset: (side: "front" | "back") => void;
+  onChange: (field: "realName" | "idCardNo", value: string) => void;
   onSubmit: () => Promise<void>;
 }) {
   if (loadStatus === "loading" || loadStatus === "idle") {
@@ -2272,10 +2387,6 @@ function renderRealNamePanel({
           <strong>已实名认证</strong>
         </div>
         <div className="profile-real-name-verified__fields">
-          <div className="profile-real-name-upload-grid profile-real-name-upload-grid--readonly">
-            <ReadOnlyImageCard label="身份证人像面" previewUrl={profile.idCardFrontUrl} />
-            <ReadOnlyImageCard label="身份证国徽面" previewUrl={profile.idCardBackUrl} />
-          </div>
           <label className="profile-real-name-field">
             <span>认证姓名</span>
             <input readOnly type="text" value={profile.realName} />
@@ -2295,53 +2406,20 @@ function renderRealNamePanel({
   return (
     <div className="profile-real-name-form">
       <div className="profile-real-name-form__tips">
-        <strong>{profile?.status === "REJECTED" ? "认证未通过，可重新提交" : "提交实名资料后自动校验"}</strong>
-        <p>需要上传身份证正反面照片，并填写姓名、手机号与身份证号。校验通过后状态锁定，不再允许修改。</p>
+        <strong>{profile?.status === "REJECTED" ? "认证未通过，可重新发起" : "进入人脸活体认证"}</strong>
+        <p>填写姓名与身份证号后，将跳转到聚合数据人脸认证页面。认证完成回到平台后会自动刷新结果。</p>
         <ul>
           <li>实名认证后默认用于钱包提现、分销开通和账号发布风控。</li>
-          <li>未通过会返回驳回原因，修正后可重新提交。</li>
-          <li>身份证照片仅用于实名审核与平台风控校验。</li>
+          <li>未通过会返回失败原因，核对信息后可重新发起。</li>
+          <li>平台只保存认证结果，不保存人脸图片。</li>
         </ul>
         {profile?.status === "REJECTED" && profile.rejectReason ? <p className="profile-real-name-form__error">{profile.rejectReason}</p> : null}
       </div>
       <div className="profile-real-name-form__fields">
-        <div className="profile-real-name-upload-grid">
-          <UploadImageCard
-            error={fieldErrors.idCardFront}
-            label="身份证人像面"
-            asset={idCardFrontAsset}
-            uploading={uploadKey === "front"}
-            triggerId="real-name-front-upload"
-            onDelete={() => onDeleteAsset("front")}
-            onSelect={(file) => onUpload("front", file)}
-          />
-          <UploadImageCard
-            error={fieldErrors.idCardBack}
-            label="身份证国徽面"
-            asset={idCardBackAsset}
-            uploading={uploadKey === "back"}
-            triggerId="real-name-back-upload"
-            onDelete={() => onDeleteAsset("back")}
-            onSelect={(file) => onUpload("back", file)}
-          />
-        </div>
         <label className="profile-real-name-field">
           <span>认证姓名</span>
           <input autoComplete="name" placeholder="请输入真实姓名" type="text" value={form.realName} onChange={(event) => onChange("realName", event.target.value)} />
           {fieldErrors.realName ? <em>{fieldErrors.realName}</em> : null}
-        </label>
-        <label className="profile-real-name-field">
-          <span>手机号</span>
-          <input
-            autoComplete="tel"
-            inputMode="numeric"
-            maxLength={11}
-            placeholder="请输入手机号"
-            type="tel"
-            value={form.phone}
-            onChange={(event) => onChange("phone", event.target.value.replace(/\D/g, "").slice(0, 11))}
-          />
-          {fieldErrors.phone ? <em>{fieldErrors.phone}</em> : null}
         </label>
         <label className="profile-real-name-field">
           <span>身份证号</span>
@@ -2357,7 +2435,7 @@ function renderRealNamePanel({
         {error ? <p className="profile-real-name-form__error">{error}</p> : null}
         <div className="profile-real-name-form__actions">
           <Button disabled={submitting} onClick={() => void onSubmit()}>
-            {submitting ? "提交中..." : "提交实名信息"}
+            {submitting ? "处理中..." : "开始人脸认证"}
           </Button>
         </div>
       </div>
@@ -2365,14 +2443,9 @@ function renderRealNamePanel({
   );
 }
 
-function validateRealNameForm(
-  form: { realName: string; phone: string; idCardNo: string },
-  idCardFrontAsset: UploadedImageAsset | null,
-  idCardBackAsset: UploadedImageAsset | null,
-) {
-  const nextErrors: { realName?: string; phone?: string; idCardNo?: string; idCardFront?: string; idCardBack?: string } = {};
+function validateRealNameForm(form: { realName: string; idCardNo: string }) {
+  const nextErrors: { realName?: string; idCardNo?: string } = {};
   const normalizedName = form.realName.trim();
-  const normalizedPhone = form.phone.trim();
   const normalizedIdCard = form.idCardNo.trim().toUpperCase();
 
   if (!normalizedName) {
@@ -2381,24 +2454,10 @@ function validateRealNameForm(
     nextErrors.realName = "姓名需为 2-20 位中文字符";
   }
 
-  if (!normalizedPhone) {
-    nextErrors.phone = "请输入手机号";
-  } else if (!/^1\d{10}$/.test(normalizedPhone)) {
-    nextErrors.phone = "请输入 11 位手机号";
-  }
-
   if (!normalizedIdCard) {
     nextErrors.idCardNo = "请输入身份证号";
   } else if (!/^\d{17}[0-9X]$/.test(normalizedIdCard)) {
     nextErrors.idCardNo = "请输入 18 位身份证号";
-  }
-
-  if (!idCardFrontAsset?.objectKey) {
-    nextErrors.idCardFront = "请上传身份证人像面";
-  }
-
-  if (!idCardBackAsset?.objectKey) {
-    nextErrors.idCardBack = "请上传身份证国徽面";
   }
 
   return nextErrors;

@@ -57,6 +57,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         "/api/auth/wechat/poll",
         "/api/auth/wechat/bind-phone",
         "/api/auth/wechat/callback",
+        "/api/auth/real-name/face/notify",
         "/api/payments/wechat/notify"
     );
 

@@ -34,6 +34,13 @@ export type RealNameProfile = {
   idCardBackUrl: string;
 };
 
+export type FaceRealNameStartResult = {
+  orderId: string;
+  jhOrderId: string;
+  verifyUrl: string;
+  expireAt: string;
+};
+
 export type WechatQrResult = {
   sceneId: string;
   qrCodeUrl: string;
@@ -144,5 +151,19 @@ export function submitRealName(realName: string, phone: string, idCardNo: string
   return request<RealNameProfile>("/api/auth/real-name", {
     method: "POST",
     body: JSON.stringify({ realName, phone, idCardNo, idCardFrontKey, idCardBackKey }),
+  });
+}
+
+export function startFaceRealName(realName: string, idCardNo: string) {
+  return request<FaceRealNameStartResult>("/api/auth/real-name/face/start", {
+    method: "POST",
+    body: JSON.stringify({ realName, idCardNo }),
+  });
+}
+
+export function loadFaceRealNameStatus(orderId: string) {
+  return request<RealNameProfile>("/api/auth/real-name/face/status", {
+    method: "POST",
+    body: JSON.stringify({ orderId }),
   });
 }
