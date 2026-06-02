@@ -429,6 +429,9 @@ public class AuthController {
             script.append("window.setTimeout(function(){window.location.replace(buildTargetUrl(targetPath).toString());}, 600);");
         } else {
             script.append("var targetUrl=buildTargetUrl(targetPath);");
+            script.append("window.localStorage.removeItem('delta_trade_session');");
+            script.append("window.localStorage.removeItem('delta_trade_token');");
+            script.append("document.cookie='delta_trade_token=; Max-Age=0; Path=/; SameSite=Lax';");
             script.append("targetUrl.searchParams.set('wechat_bind','1');");
             script.append("targetUrl.searchParams.set('bind_token',").append(toJsString(page.getBindToken())).append(");");
             script.append("window.setTimeout(function(){window.location.replace(targetUrl.toString());}, 600);");

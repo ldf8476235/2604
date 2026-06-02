@@ -50,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (shouldBind !== "1" || !bindToken) {
       return;
     }
+    clearAuthSession();
+    setSession(null);
     setPendingWechatBindToken(bindToken);
     setModalEntry("login");
     setModalOpen(true);

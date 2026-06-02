@@ -302,15 +302,10 @@ public class AuthService {
         }
 
         if ("AUTHORIZED_UNBOUND".equals(session.getStatus())) {
-            if (session.getBindToken() == null || session.getBindToken().isEmpty()) {
-                LocalDateTime expireAt = LocalDateTime.now().plusMinutes(VERIFY_TICKET_MINUTES);
-                String bindToken = UUID.randomUUID().toString().replace("-", "");
-                authRedisStore.saveVerifyTicket(bindToken, session.getOpenId(), "WECHAT_BIND", expireAt);
-                session.setBindToken(bindToken);
-            }
+            String bindToken = ensureWechatBindToken(session);
             authRedisStore.saveWechatQrSession(session);
             log.info("wechat login requires binding sceneId={} openId={}", sceneId, maskOpenId(session.getOpenId()));
-            return new WechatPollResult("AUTHORIZED_UNBOUND", null, session.getBindToken(), null);
+            return new WechatPollResult("AUTHORIZED_UNBOUND", null, bindToken, null);
         }
 
         if ("FAILED".equals(session.getStatus())) {
@@ -367,16 +362,22 @@ public class AuthService {
                 }
                 return new WechatCallbackPage(true, "微信授权成功", "正在为你登录并返回站内页面。", buildLoginResult(user), null, returnPath);
             }
-            if (session.getBindToken() == null || session.getBindToken().isEmpty()) {
-                LocalDateTime expireAt = LocalDateTime.now().plusMinutes(VERIFY_TICKET_MINUTES);
-                String bindToken = UUID.randomUUID().toString().replace("-", "");
-                authRedisStore.saveVerifyTicket(bindToken, session.getOpenId(), "WECHAT_BIND", expireAt);
-                session.setBindToken(bindToken);
-                authRedisStore.saveWechatQrSession(session);
-            }
-            return new WechatCallbackPage(true, "微信授权成功", "微信授权已完成，正在返回站内继续绑定手机号。", null, session.getBindToken(), returnPath);
+            String bindToken = ensureWechatBindToken(session);
+            authRedisStore.saveWechatQrSession(session);
+            return new WechatCallbackPage(true, "微信授权成功", "微信授权已完成，正在返回站内继续绑定手机号。", null, bindToken, returnPath);
         }
         return new WechatCallbackPage(true, "微信授权成功", "请回到电脑端，系统正在为你完成登录。", null, null, returnPath);
+    }
+
+    private String ensureWechatBindToken(AuthRedisStore.WechatQrCache session) {
+        if (session.getBindToken() != null && !session.getBindToken().isEmpty()) {
+            return session.getBindToken();
+        }
+        LocalDateTime expireAt = LocalDateTime.now().plusMinutes(VERIFY_TICKET_MINUTES);
+        String bindToken = UUID.randomUUID().toString().replace("-", "");
+        authRedisStore.saveVerifyTicket(bindToken, session.getOpenId(), "WECHAT_BIND", expireAt);
+        session.setBindToken(bindToken);
+        return bindToken;
     }
 
     private boolean isWechatInternalMode(AuthRedisStore.WechatQrCache session) {
@@ -432,11 +433,11 @@ public class AuthService {
         verifySmsCode(phone, "BIND_PHONE", code);
 
         String openId = ticket.getSubject();
-        if (findUserByOpenId(openId) != null) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "该微信账号已绑定平台用户");
-        }
-
+        AuthUserDO openUser = findUserByOpenId(openId);
         AuthUserDO user = findUserByPhone(phone);
+        if (openUser != null && (user == null || !openUser.getId().equals(user.getId()))) {
+            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "该微信已绑定其他手机号，请使用已绑定手机号验证");
+        }
         LocalDateTime now = LocalDateTime.now();
         if (user == null) {
             user = new AuthUserDO();
