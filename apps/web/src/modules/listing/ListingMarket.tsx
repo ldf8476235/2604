@@ -240,6 +240,50 @@ function escapeExcelCell(value?: string | number | null) {
     .replace(/"/g, "&quot;");
 }
 
+function splitExportSegments(value?: string | null) {
+  return (value || "")
+    .split(/[、,，]/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry && entry !== "无");
+}
+
+function isExperienceCardSegment(value: string) {
+  return /体验卡|保险卡/.test(value);
+}
+
+function formatExperienceCardSegment(value: string) {
+  const cleaned = value.replace(/（(?:收费|赠送)）/g, "").trim();
+  const match = cleaned.match(/^(.+?)(\d+)$/);
+  if (!match) {
+    return cleaned;
+  }
+  return `${match[1]}+${match[2]}天`;
+}
+
+function getExperienceCardSummary(item: ListingRow) {
+  const source = splitExportSegments(item.exportInfo?.extraItems);
+  const cardItems = source.filter(isExperienceCardSegment).map(formatExperienceCardSegment);
+  if (cardItems.length) {
+    return cardItems.join("、");
+  }
+  return item.extraItems
+    .filter((entry) => isExperienceCardSegment(entry.label) && entry.count > 0)
+    .map((entry) => `${entry.label}+${entry.count}天`)
+    .join("、") || "";
+}
+
+function getEquipmentRemarkSummary(item: ListingRow) {
+  const source = splitExportSegments(item.exportInfo?.extraItems).filter((entry) => !isExperienceCardSegment(entry));
+  if (source.length) {
+    return source.join("、");
+  }
+  const fallback = item.extraItems
+    .filter((entry) => !isExperienceCardSegment(entry.label) && entry.count > 0)
+    .map((entry) => `${entry.label}${entry.count}`)
+    .join("、");
+  return fallback || getExportEquipmentSummary(item);
+}
+
 function buildListingExportRows(items: ListingRow[]) {
   return items.map((item) => ({
     编号: item.id,
@@ -248,22 +292,19 @@ function buildListingExportRows(items: ListingRow[]) {
     租期: getDetailEntryValue(item, "出租天数") || getSummaryChipValue(item, "租期"),
     段位: getDetailEntryValue(item, "段位") || getDetailEntryValue(item, "最高段位"),
     保险: getDetailEntryValue(item, "安全箱等级") || getPanelValue(item, "保险等级"),
+    体验卡: getExperienceCardSummary(item),
     体力: getPanelValue(item, "体力等级"),
     负重: getPanelValue(item, "负重等级"),
     价格: item.pricing.rent,
     押金: item.pricing.deposit,
     比例: item.exchangeRateLabel,
     刀皮: item.exportInfo?.knifeSkins || getPanelValue(item, "持有刀皮") || item.highlights.join("、"),
-    人物皮: item.exportInfo?.redSkins || getPanelValue(item, "干员外观") || getDetailEntryValue(item, "核心干员"),
-    备注装备: [
-      item.exportInfo?.weaponSkins,
-      item.exportInfo?.goldSkins,
-      item.exportInfo?.extraItems,
-    ].filter((value) => value && value !== "无").join("、") || getExportEquipmentSummary(item),
-    客服: "",
+    武器皮肤: item.exportInfo?.weaponSkins || "",
+    人物皮红皮: item.exportInfo?.redSkins || getPanelValue(item, "干员外观") || getDetailEntryValue(item, "核心干员"),
+    人物金皮: item.exportInfo?.goldSkins || "",
+    备注装备: getEquipmentRemarkSummary(item),
     备注: normalizeExportText(item.description),
     号主在线时间: item.exportInfo?.deliveryTimeRange || (item.assuranceTags.includes("24h在线") ? "24h在线" : ""),
-    号结算情况: "",
   }));
 }
 
@@ -276,19 +317,41 @@ function downloadListingsExcel(items: ListingRow[]) {
     "租期",
     "段位",
     "保险",
+    "体验卡",
     "体力",
     "负重",
     "价格",
     "押金",
     "比例",
     "刀皮",
-    "人物皮",
+    "武器皮肤",
+    "人物皮红皮",
+    "人物金皮",
     "备注装备",
-    "客服",
     "备注",
     "号主在线时间",
-    "号结算情况",
   ] as const;
+  const columnWidths: Record<(typeof columns)[number], number> = {
+    编号: 130,
+    区服: 90,
+    纯币: 86,
+    租期: 72,
+    段位: 78,
+    保险: 120,
+    体验卡: 120,
+    体力: 60,
+    负重: 60,
+    价格: 78,
+    押金: 78,
+    比例: 78,
+    刀皮: 170,
+    武器皮肤: 170,
+    人物皮红皮: 170,
+    人物金皮: 170,
+    备注装备: 260,
+    备注: 220,
+    号主在线时间: 100,
+  };
   const today = new Date();
   const stamp = [
     today.getFullYear(),
@@ -304,7 +367,7 @@ function downloadListingsExcel(items: ListingRow[]) {
           const value = row[column];
           const className = column === "比例"
             ? "ratio-cell"
-            : column === "刀皮" || column === "人物皮" || column === "备注装备"
+            : column === "刀皮" || column === "武器皮肤" || column === "人物皮红皮" || column === "人物金皮" || column === "备注装备"
               ? "accent-cell"
               : "";
           return `<td class="${className}">${escapeExcelCell(value)}</td>`;
@@ -334,7 +397,7 @@ function downloadListingsExcel(items: ListingRow[]) {
   <table>
     <colgroup>
       <col style="width:48px" />
-      ${columns.map(() => '<col style="width:110px" />').join("")}
+      ${columns.map((column) => `<col style="width:${columnWidths[column]}px" />`).join("")}
     </colgroup>
     <tr class="hero"><td colspan="${columns.length + 1}" class="hero-title">萌虎商行 <strong>已上架账号导出</strong></td></tr>
     <tr class="note"><td colspan="${columns.length + 1}">1、当前文件按首页已应用筛选条件导出，只包含已上架账号。</td></tr>
