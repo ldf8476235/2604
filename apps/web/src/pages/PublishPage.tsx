@@ -705,7 +705,14 @@ export function PublishPage() {
                   />
                 </Field>
                 <Field label="账号等级" required error={fieldErrors.accountLevel}>
-                  <input value={form.accountLevel} onChange={(event) => updateField("accountLevel", event.target.value)} placeholder="请输入账号等级" />
+                  <input
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    value={form.accountLevel}
+                    onChange={(event) => updateField("accountLevel", normalizeIntegerInput(event.target.value))}
+                    placeholder="请输入账号等级"
+                  />
                 </Field>
                 <Field label="账号段位" required error={fieldErrors.rankName}>
                   <OptionPopover
@@ -2423,8 +2430,8 @@ function validateForm(
   if (!form.unlockSaeed) {
     errors.unlockSaeed = "请选择是否解锁赛依德";
   }
-  if (!positiveInt(form.accountLevel, 1, 120)) {
-    errors.accountLevel = "账号等级需在 1-120 之间";
+  if (!positiveInt(form.accountLevel, 1, 60)) {
+    errors.accountLevel = "账号等级需在 1-60 之间";
   }
   if (!form.rankName) {
     errors.rankName = "请选择账号段位";
