@@ -298,29 +298,13 @@ public class ListingService {
         if (!"newest".equals(sort) && !"oldest".equals(sort)) {
             return false;
         }
-        return query.getMinPrice() == null
-            && query.getMaxPrice() == null
-            && !StringUtils.hasText(query.getDepositRange())
-            && query.getMinHafCurrency() == null
-            && query.getMaxHafCurrency() == null
-            && query.getMinAccountLevel() == null
-            && query.getMaxAccountLevel() == null
-            && query.getRegionCodes().isEmpty()
+        return !StringUtils.hasText(query.getDepositRange())
             && query.getWeaponCodes().isEmpty()
             && query.getKnifeSkins().isEmpty()
             && query.getRedSkins().isEmpty()
             && query.getGoldSkins().isEmpty()
             && !StringUtils.hasText(query.getAwmBulletRange())
-            && !StringUtils.hasText(query.getRank())
-            && query.getSafeBoxLevel() == null
-            && query.getStaminaLevel() == null
-            && query.getCarryLevel() == null
-            && !StringUtils.hasText(query.getDeliveryMethod())
-            && !StringUtils.hasText(query.getSellerType())
-            && !StringUtils.hasText(query.getExchangeRateType())
-            && query.getNegotiable() == null
-            && query.getAlwaysOnline() == null
-            && query.getPublishedWithinDays() == null;
+            && !StringUtils.hasText(query.getExchangeRateType());
     }
 
     private String buildMarketplacePageClause(String sort, int fromIndex, int pageSize) {
@@ -353,6 +337,65 @@ public class ListingService {
                 .or()
                 .like(AccountListingDO::getCityName, keyword)
             );
+        }
+        if (query.getMinPrice() != null) {
+            wrapper.ge(AccountListingDO::getPrice, query.getMinPrice());
+        }
+        if (query.getMaxPrice() != null) {
+            wrapper.le(AccountListingDO::getPrice, query.getMaxPrice());
+        }
+        if (query.getMinHafCurrency() != null) {
+            wrapper.ge(AccountListingDO::getHafCurrency, query.getMinHafCurrency());
+        }
+        if (query.getMaxHafCurrency() != null) {
+            wrapper.le(AccountListingDO::getHafCurrency, query.getMaxHafCurrency());
+        }
+        if (query.getMinAccountLevel() != null) {
+            wrapper.ge(AccountListingDO::getAccountLevel, query.getMinAccountLevel());
+        }
+        if (query.getMaxAccountLevel() != null) {
+            wrapper.le(AccountListingDO::getAccountLevel, query.getMaxAccountLevel());
+        }
+        if (!query.getRegionCodes().isEmpty()) {
+            wrapper.and(inner -> inner
+                .in(AccountListingDO::getCityCode, query.getRegionCodes())
+                .or()
+                .in(AccountListingDO::getProvinceCode, query.getRegionCodes())
+            );
+        }
+        if (StringUtils.hasText(query.getRank())) {
+            wrapper.eq(AccountListingDO::getRankName, query.getRank());
+        }
+        if (query.getSafeBoxLevel() != null) {
+            wrapper.eq(AccountListingDO::getSafeBoxLevel, query.getSafeBoxLevel());
+        }
+        if (query.getStaminaLevel() != null) {
+            wrapper.apply(
+                "JSON_VALID(publish_attributes_json) AND CAST(JSON_UNQUOTE(JSON_EXTRACT(publish_attributes_json, '$.staminaLevel')) AS UNSIGNED) = {0}",
+                query.getStaminaLevel()
+            );
+        }
+        if (query.getCarryLevel() != null) {
+            wrapper.apply(
+                "JSON_VALID(publish_attributes_json) AND CAST(JSON_UNQUOTE(JSON_EXTRACT(publish_attributes_json, '$.carryLevel')) AS UNSIGNED) = {0}",
+                query.getCarryLevel()
+            );
+        }
+        if (StringUtils.hasText(query.getDeliveryMethod())) {
+            wrapper.eq(AccountListingDO::getDeliveryMethod, query.getDeliveryMethod());
+        }
+        if (StringUtils.hasText(query.getSellerType())) {
+            wrapper.eq(AccountListingDO::getSellerType, query.getSellerType());
+        }
+        if (query.getNegotiable() != null) {
+            wrapper.eq(AccountListingDO::getNegotiable, query.getNegotiable());
+        }
+        if (query.getAlwaysOnline() != null) {
+            wrapper.eq(AccountListingDO::getAlwaysOnline, query.getAlwaysOnline());
+        }
+        if (query.getPublishedWithinDays() != null) {
+            LocalDateTime threshold = LocalDateTime.now().minusDays(query.getPublishedWithinDays());
+            wrapper.apply("COALESCE(published_at, submitted_at) >= {0}", threshold);
         }
         return wrapper;
     }
