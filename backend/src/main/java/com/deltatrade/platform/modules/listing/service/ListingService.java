@@ -71,7 +71,10 @@ public class ListingService {
         new OptionItem("蚀金玫瑰", "蚀金玫瑰"),
         new OptionItem("水墨云图", "水墨云图"),
         new OptionItem("午夜邮差", "午夜邮差"),
-        new OptionItem("天际线", "天际线")
+        new OptionItem("天际线", "天际线"),
+        new OptionItem("飞虎", "飞虎"),
+        new OptionItem("铁面判官", "铁面判官"),
+        new OptionItem("蛟龙特战队", "蛟龙特战队")
     );
     private static final List<OptionItem> AWM_BULLET_RANGE_OPTIONS = Arrays.asList(
         new OptionItem("0_50", "0-50"),

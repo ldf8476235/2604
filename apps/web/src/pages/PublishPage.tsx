@@ -215,6 +215,9 @@ const DEFAULT_RED_SKINS: OptionItem[] = [
   { value: "水墨云图", label: "水墨云图" },
   { value: "午夜邮差", label: "午夜邮差" },
   { value: "天际线", label: "天际线" },
+  { value: "飞虎", label: "飞虎" },
+  { value: "铁面判官", label: "铁面判官" },
+  { value: "蛟龙特战队", label: "蛟龙特战队" },
 ];
 
 const DEFAULT_WEAPON_SKINS: OptionItem[] = [
