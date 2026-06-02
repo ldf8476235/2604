@@ -577,9 +577,10 @@ type FilterPanelProps = {
   onApply: () => void;
   onReset: () => void;
   mode: "desktop" | "mobile";
+  applying: boolean;
 };
 
-function FilterPanel({ meta, draft, onChange, onApply, onReset, mode }: FilterPanelProps) {
+function FilterPanel({ meta, draft, onChange, onApply, onReset, mode, applying }: FilterPanelProps) {
   const desktopFiltersRef = useRef<HTMLDivElement | null>(null);
   useCompactFilterAutoClose(desktopFiltersRef, mode === "desktop");
 
@@ -697,8 +698,15 @@ function FilterPanel({ meta, draft, onChange, onApply, onReset, mode }: FilterPa
             onSelect={(value) => update("deliveryMethod", value)}
           />
           <div className="market-desktop-filters__actions">
-            <button className="market-filter-action market-filter-action--confirm" type="button" onClick={onApply}>
-              筛选
+            <button
+              className={`market-filter-action market-filter-action--confirm ${applying ? "is-loading" : ""}`}
+              type="button"
+              onClick={onApply}
+              disabled={applying}
+              aria-busy={applying}
+            >
+              {applying ? <span className="market-filter-spinner" aria-hidden="true" /> : null}
+              {applying ? "筛选中" : "筛选"}
             </button>
             <button className="market-filter-action market-filter-action--reset" type="button" onClick={onReset}>
               重置筛选条件
@@ -839,8 +847,15 @@ function FilterPanel({ meta, draft, onChange, onApply, onReset, mode }: FilterPa
           <button className="filter-reset" type="button" onClick={onReset}>
             重置筛选条件
           </button>
-          <button className="filter-confirm" type="button" onClick={onApply}>
-            应用筛选条件
+          <button
+            className={`filter-confirm ${applying ? "is-loading" : ""}`}
+            type="button"
+            onClick={onApply}
+            disabled={applying}
+            aria-busy={applying}
+          >
+            {applying ? <span className="market-filter-spinner" aria-hidden="true" /> : null}
+            {applying ? "筛选中" : "应用筛选条件"}
           </button>
         </div>
       </div>
@@ -3158,7 +3173,15 @@ export function ListingMarket({ marketType }: ListingMarketProps) {
           {meta ? (
             <>
               <section className="market-surface market-surface--desktop">
-                <FilterPanel meta={meta} draft={draft} onChange={setDraft} onApply={applyFilters} onReset={resetFilters} mode="desktop" />
+                <FilterPanel
+                  meta={meta}
+                  draft={draft}
+                  onChange={setDraft}
+                  onApply={applyFilters}
+                  onReset={resetFilters}
+                  mode="desktop"
+                  applying={loading && query.page <= 1}
+                />
                 <div className="market-desktop-toolbar">
                   <div className="market-desktop-toolbar__presets">
                     {desktopPresetActions.map((item) => {
@@ -3272,7 +3295,15 @@ export function ListingMarket({ marketType }: ListingMarketProps) {
                 关闭
               </button>
             </div>
-            <FilterPanel meta={meta} draft={draft} onChange={setDraft} onApply={applyFilters} onReset={resetFilters} mode="mobile" />
+            <FilterPanel
+              meta={meta}
+              draft={draft}
+              onChange={setDraft}
+              onApply={applyFilters}
+              onReset={resetFilters}
+              mode="mobile"
+              applying={loading && query.page <= 1}
+            />
           </div>
         </div>
       ) : null}

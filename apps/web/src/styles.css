@@ -732,6 +732,37 @@
   background: #6aceaf;
 }
 
+.filter-confirm.is-loading,
+.market-filter-action--confirm.is-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 10px 22px rgba(255, 130, 78, 0.28);
+  cursor: wait;
+}
+
+.filter-confirm:disabled,
+.market-filter-action:disabled {
+  opacity: 0.86;
+  pointer-events: none;
+}
+
+.market-filter-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.46);
+  border-top-color: #ffffff;
+  border-radius: 999px;
+  animation: market-filter-spin 720ms linear infinite;
+}
+
+@keyframes market-filter-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .filter-reset {
   border: 1px solid rgba(24, 20, 14, 0.08);
   color: #7b7265;
