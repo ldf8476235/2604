@@ -71,6 +71,7 @@ function cloneQuery(source: MarketplaceQuery): MarketplaceQuery {
     weaponCodes: [...source.weaponCodes],
     knifeSkins: [...source.knifeSkins],
     redSkins: [...source.redSkins],
+    goldSkins: [...source.goldSkins],
   };
 }
 
@@ -553,6 +554,15 @@ function FilterPanel({ meta, draft, onChange, onApply, onReset, mode }: FilterPa
             onSelect={(value) => update("depositRange", value)}
           />
           <CompactRangeField
+            label="哈夫币"
+            leftPlaceholder="最低哈夫币"
+            leftValue={draft.minHafCurrency}
+            rightPlaceholder="最高哈夫币"
+            rightValue={draft.maxHafCurrency}
+            onLeftChange={(value) => update("minHafCurrency", value)}
+            onRightChange={(value) => update("maxHafCurrency", value)}
+          />
+          <CompactRangeField
             label="账号等级"
             leftPlaceholder="最低等级"
             leftValue={draft.minLevel}
@@ -601,6 +611,13 @@ function FilterPanel({ meta, draft, onChange, onApply, onReset, mode }: FilterPa
             options={meta.redSkins}
             selected={draft.redSkins}
             onToggle={(value) => update("redSkins", toggleValue(draft.redSkins, value))}
+          />
+          <CompactMultiSelectField
+            label="金皮筛选"
+            placeholder="金皮筛选"
+            options={meta.goldSkins}
+            selected={draft.goldSkins}
+            onToggle={(value) => update("goldSkins", toggleValue(draft.goldSkins, value))}
           />
           <CompactSelectField
             label="段位"
@@ -656,6 +673,16 @@ function FilterPanel({ meta, draft, onChange, onApply, onReset, mode }: FilterPa
           options={meta.depositRanges}
           selected={draft.depositRange}
           onSelect={(value) => update("depositRange", value)}
+        />
+        <FilterRangeField
+          label="哈夫币区间"
+          leftPlaceholder="最低哈夫币"
+          leftValue={draft.minHafCurrency}
+          rightPlaceholder="最高哈夫币"
+          rightValue={draft.maxHafCurrency}
+          note="输入最小值和最大值，空则不限"
+          onLeftChange={(value) => update("minHafCurrency", value)}
+          onRightChange={(value) => update("maxHafCurrency", value)}
         />
         <FilterRangeField
           label="账号等级"
@@ -714,6 +741,14 @@ function FilterPanel({ meta, draft, onChange, onApply, onReset, mode }: FilterPa
           options={meta.redSkins}
           selected={draft.redSkins}
           onToggle={(value) => update("redSkins", toggleValue(draft.redSkins, value))}
+        />
+        <FilterMultiSelectField
+          label="金皮筛选"
+          note="多选金皮，命中任一项即会展示"
+          placeholder="选择金皮"
+          options={meta.goldSkins}
+          selected={draft.goldSkins}
+          onToggle={(value) => update("goldSkins", toggleValue(draft.goldSkins, value))}
         />
         <FilterSingleSelectField
           label="段位"

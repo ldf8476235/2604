@@ -148,6 +148,7 @@ export type MarketplaceMeta = {
   weapons: OptionItem[];
   knifeSkins: OptionItem[];
   redSkins: OptionItem[];
+  goldSkins: OptionItem[];
   awmBulletRanges: OptionItem[];
   depositRanges: OptionItem[];
   ranks: OptionItem[];
@@ -164,6 +165,7 @@ export type MarketplaceQuery = {
   minPrice: string;
   maxPrice: string;
   depositRange: string;
+  minHafCurrency: string;
   maxHafCurrency: string;
   minLevel: string;
   maxLevel: string;
@@ -171,6 +173,7 @@ export type MarketplaceQuery = {
   weaponCodes: string[];
   knifeSkins: string[];
   redSkins: string[];
+  goldSkins: string[];
   awmBulletRange: string;
   rank: string;
   safeBoxLevel: string;
@@ -200,6 +203,7 @@ export const DEFAULT_MARKET_QUERY: MarketplaceQuery = {
   minPrice: "",
   maxPrice: "",
   depositRange: "",
+  minHafCurrency: "",
   maxHafCurrency: "",
   minLevel: "",
   maxLevel: "",
@@ -207,6 +211,7 @@ export const DEFAULT_MARKET_QUERY: MarketplaceQuery = {
   weaponCodes: [],
   knifeSkins: [],
   redSkins: [],
+  goldSkins: [],
   awmBulletRange: "",
   rank: "",
   safeBoxLevel: "",
@@ -233,6 +238,7 @@ export function loadMarketplaceListings(query: MarketplaceQuery) {
   appendParam(params, "minPrice", query.minPrice);
   appendParam(params, "maxPrice", query.maxPrice);
   appendParam(params, "depositRange", query.depositRange);
+  appendParam(params, "minHafCurrency", query.minHafCurrency);
   appendParam(params, "maxHafCurrency", query.maxHafCurrency);
   appendParam(params, "minLevel", query.minLevel);
   appendParam(params, "maxLevel", query.maxLevel);
@@ -240,6 +246,7 @@ export function loadMarketplaceListings(query: MarketplaceQuery) {
   appendCsv(params, "weaponCodes", query.weaponCodes);
   appendCsv(params, "knifeSkins", query.knifeSkins);
   appendCsv(params, "redSkins", query.redSkins);
+  appendCsv(params, "goldSkins", query.goldSkins);
   appendParam(params, "awmBulletRange", query.awmBulletRange);
   appendParam(params, "rank", query.rank);
   appendParam(params, "safeBoxLevel", query.safeBoxLevel);

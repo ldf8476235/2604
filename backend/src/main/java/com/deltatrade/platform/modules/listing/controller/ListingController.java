@@ -30,6 +30,7 @@ public class ListingController {
         @RequestParam(required = false) BigDecimal minPrice,
         @RequestParam(required = false) BigDecimal maxPrice,
         @RequestParam(required = false) String depositRange,
+        @RequestParam(required = false) Long minHafCurrency,
         @RequestParam(required = false) Long maxHafCurrency,
         @RequestParam(required = false) Integer minLevel,
         @RequestParam(required = false) Integer maxLevel,
@@ -37,6 +38,7 @@ public class ListingController {
         @RequestParam(required = false) String weaponCodes,
         @RequestParam(required = false) String knifeSkins,
         @RequestParam(required = false) String redSkins,
+        @RequestParam(required = false) String goldSkins,
         @RequestParam(required = false) String awmBulletRange,
         @RequestParam(required = false) String rank,
         @RequestParam(required = false) Integer safeBoxLevel,
@@ -57,6 +59,7 @@ public class ListingController {
         query.setMinPrice(minPrice);
         query.setMaxPrice(maxPrice);
         query.setDepositRange(depositRange);
+        query.setMinHafCurrency(minHafCurrency);
         query.setMaxHafCurrency(maxHafCurrency);
         query.setMinAccountLevel(minLevel);
         query.setMaxAccountLevel(maxLevel);
@@ -64,6 +67,7 @@ public class ListingController {
         query.setWeaponCodes(parseCsv(weaponCodes));
         query.setKnifeSkins(parseCsv(knifeSkins));
         query.setRedSkins(parseCsv(redSkins));
+        query.setGoldSkins(parseCsv(goldSkins));
         query.setAwmBulletRange(awmBulletRange);
         query.setRank(rank);
         query.setSafeBoxLevel(safeBoxLevel);

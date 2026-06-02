@@ -76,6 +76,19 @@ public class ListingService {
         new OptionItem("铁面判官", "铁面判官"),
         new OptionItem("蛟龙特战队", "蛟龙特战队")
     );
+    private static final List<OptionItem> GOLD_SKIN_OPTIONS = Arrays.asList(
+        new OptionItem("鸟兽兽-荒原猎手", "鸟兽兽-荒原猎手"),
+        new OptionItem("露娜-金牌射手", "露娜-金牌射手"),
+        new OptionItem("牧羊人-街头之星", "牧羊人-街头之星"),
+        new OptionItem("蜂医-危险物质", "蜂医-危险物质"),
+        new OptionItem("蜂医-送葬人", "蜂医-送葬人"),
+        new OptionItem("无名-夜鹰", "无名-夜鹰"),
+        new OptionItem("威龙-壮志凌云", "威龙-壮志凌云"),
+        new OptionItem("威龙-蛟龙特战队", "威龙-蛟龙特战队"),
+        new OptionItem("威龙-铁面判官", "威龙-铁面判官"),
+        new OptionItem("威龙-吴彦祖", "威龙-吴彦祖"),
+        new OptionItem("红狼-电锯惊魂", "红狼-电锯惊魂")
+    );
     private static final List<OptionItem> AWM_BULLET_RANGE_OPTIONS = Arrays.asList(
         new OptionItem("0_50", "0-50"),
         new OptionItem("50_100", "50-100"),
@@ -171,6 +184,7 @@ public class ListingService {
             WEAPON_OPTIONS,
             KNIFE_SKIN_OPTIONS,
             RED_SKIN_OPTIONS,
+            GOLD_SKIN_OPTIONS,
             AWM_BULLET_RANGE_OPTIONS,
             DEPOSIT_RANGE_OPTIONS,
             RANK_OPTIONS,
@@ -287,6 +301,7 @@ public class ListingService {
         return query.getMinPrice() == null
             && query.getMaxPrice() == null
             && !StringUtils.hasText(query.getDepositRange())
+            && query.getMinHafCurrency() == null
             && query.getMaxHafCurrency() == null
             && query.getMinAccountLevel() == null
             && query.getMaxAccountLevel() == null
@@ -294,6 +309,7 @@ public class ListingService {
             && query.getWeaponCodes().isEmpty()
             && query.getKnifeSkins().isEmpty()
             && query.getRedSkins().isEmpty()
+            && query.getGoldSkins().isEmpty()
             && !StringUtils.hasText(query.getAwmBulletRange())
             && !StringUtils.hasText(query.getRank())
             && query.getSafeBoxLevel() == null
@@ -653,7 +669,10 @@ public class ListingService {
         if (StringUtils.hasText(query.getDepositRange()) && !matchesMoneyRange(query.getDepositRange(), deposit)) {
             return false;
         }
-        if (query.getMaxHafCurrency() != null && (row.getHafCurrency() == null || row.getHafCurrency() >= query.getMaxHafCurrency())) {
+        if (query.getMinHafCurrency() != null && (row.getHafCurrency() == null || row.getHafCurrency() < query.getMinHafCurrency())) {
+            return false;
+        }
+        if (query.getMaxHafCurrency() != null && (row.getHafCurrency() == null || row.getHafCurrency() > query.getMaxHafCurrency())) {
             return false;
         }
         if (query.getMinAccountLevel() != null && (row.getAccountLevel() == null || row.getAccountLevel() < query.getMinAccountLevel())) {
@@ -702,6 +721,9 @@ public class ListingService {
             return false;
         }
         if (!query.getRedSkins().isEmpty() && Collections.disjoint(query.getRedSkins(), safeList(attributes.getRedSkins()))) {
+            return false;
+        }
+        if (!query.getGoldSkins().isEmpty() && Collections.disjoint(query.getGoldSkins(), safeList(attributes.getGoldSkins()))) {
             return false;
         }
         if (StringUtils.hasText(query.getAwmBulletRange()) && !matchesAwmBulletRange(query.getAwmBulletRange(), attributes.getExtraItems())) {
@@ -1499,6 +1521,7 @@ public class ListingService {
         private final List<OptionItem> weapons;
         private final List<OptionItem> knifeSkins;
         private final List<OptionItem> redSkins;
+        private final List<OptionItem> goldSkins;
         private final List<OptionItem> awmBulletRanges;
         private final List<OptionItem> depositRanges;
         private final List<OptionItem> ranks;
@@ -1514,6 +1537,7 @@ public class ListingService {
             List<OptionItem> weapons,
             List<OptionItem> knifeSkins,
             List<OptionItem> redSkins,
+            List<OptionItem> goldSkins,
             List<OptionItem> awmBulletRanges,
             List<OptionItem> depositRanges,
             List<OptionItem> ranks,
@@ -1528,6 +1552,7 @@ public class ListingService {
             this.weapons = weapons;
             this.knifeSkins = knifeSkins;
             this.redSkins = redSkins;
+            this.goldSkins = goldSkins;
             this.awmBulletRanges = awmBulletRanges;
             this.depositRanges = depositRanges;
             this.ranks = ranks;
@@ -1553,6 +1578,10 @@ public class ListingService {
 
         public List<OptionItem> getRedSkins() {
             return redSkins;
+        }
+
+        public List<OptionItem> getGoldSkins() {
+            return goldSkins;
         }
 
         public List<OptionItem> getAwmBulletRanges() {
@@ -1633,6 +1662,7 @@ public class ListingService {
         private BigDecimal minPrice;
         private BigDecimal maxPrice;
         private String depositRange;
+        private Long minHafCurrency;
         private Long maxHafCurrency;
         private Integer minAccountLevel;
         private Integer maxAccountLevel;
@@ -1640,6 +1670,7 @@ public class ListingService {
         private List<String> weaponCodes = Collections.emptyList();
         private List<String> knifeSkins = Collections.emptyList();
         private List<String> redSkins = Collections.emptyList();
+        private List<String> goldSkins = Collections.emptyList();
         private String awmBulletRange;
         private String rank;
         private Integer safeBoxLevel;
@@ -1685,6 +1716,14 @@ public class ListingService {
 
         public void setDepositRange(String depositRange) {
             this.depositRange = depositRange;
+        }
+
+        public Long getMinHafCurrency() {
+            return minHafCurrency;
+        }
+
+        public void setMinHafCurrency(Long minHafCurrency) {
+            this.minHafCurrency = minHafCurrency;
         }
 
         public Long getMaxHafCurrency() {
@@ -1741,6 +1780,14 @@ public class ListingService {
 
         public void setRedSkins(List<String> redSkins) {
             this.redSkins = redSkins;
+        }
+
+        public List<String> getGoldSkins() {
+            return goldSkins == null ? Collections.<String>emptyList() : goldSkins;
+        }
+
+        public void setGoldSkins(List<String> goldSkins) {
+            this.goldSkins = goldSkins;
         }
 
         public String getAwmBulletRange() {
