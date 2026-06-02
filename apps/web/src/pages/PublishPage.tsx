@@ -1025,6 +1025,7 @@ export function PublishPage() {
               <ChoicePillGroup
                 label="赔付方案"
                 required
+                className="publish-tag-editor--compensation"
                 error={fieldErrors.compensationPlan}
                 options={compensationPlans}
                 value={form.compensationPlan}
@@ -2060,6 +2061,7 @@ function ChoicePillGroup({
   helper,
   error,
   required,
+  className,
 }: {
   label: string;
   options: OptionItem[];
@@ -2068,9 +2070,10 @@ function ChoicePillGroup({
   helper?: string;
   error?: string;
   required?: boolean;
+  className?: string;
 }) {
   return (
-    <div className="publish-tag-editor">
+    <div className={`publish-tag-editor${className ? ` ${className}` : ""}`}>
       <div className="publish-tag-editor__header">
         <strong className={required ? "is-required" : ""}>{label}</strong>
       </div>

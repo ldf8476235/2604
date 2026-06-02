@@ -3372,6 +3372,10 @@
   white-space: pre-line;
 }
 
+.publish-tag-editor--compensation .publish-choice-helper {
+  color: #dc2626;
+}
+
 .publish-option {
   min-height: 42px;
   padding: 0 14px;
