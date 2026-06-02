@@ -621,10 +621,10 @@ public class ListingService {
                     new PanelEntry("发布时间", formatPublishTime(row.getPublishedAt(), row.getSubmittedAt()))
                 )),
                 new Panel("mint", true, Arrays.asList(
-                    new PanelEntry("持有刀皮", firstOrDash(knifeSkins)),
-                    new PanelEntry("干员外观", firstOrDash(redSkins)),
-                    new PanelEntry("武器皮肤", firstOrDash(weaponSkins)),
-                    new PanelEntry("人物金皮", firstOrDash(goldSkins))
+                    new PanelEntry("持有刀皮", joinOrDefault(knifeSkins, "-")),
+                    new PanelEntry("干员外观", joinOrDefault(redSkins, "-")),
+                    new PanelEntry("武器皮肤", joinOrDefault(weaponSkins, "-")),
+                    new PanelEntry("人物金皮", joinOrDefault(goldSkins, "-"))
                 ))
             ),
             new Pricing(formatMoney(deposit), formatMoney(rent), formatMoney(total), formatMoney(extraItemsAmount)),
