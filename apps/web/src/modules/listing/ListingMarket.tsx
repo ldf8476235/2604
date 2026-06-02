@@ -2730,6 +2730,7 @@ export function ListingMarket({ marketType }: ListingMarketProps) {
 
   const applyFilters = () => {
     setQuery(resetQueryPagination(draft));
+    setRequestNonce((current) => current + 1);
     setMobileFilterOpen(false);
   };
 
@@ -2737,6 +2738,7 @@ export function ListingMarket({ marketType }: ListingMarketProps) {
     const empty = cloneQuery(DEFAULT_MARKET_QUERY);
     setDraft(empty);
     setQuery(resetQueryPagination(empty));
+    setRequestNonce((current) => current + 1);
     setMobileFilterOpen(false);
   };
 
