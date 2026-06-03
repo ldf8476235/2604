@@ -545,9 +545,6 @@ export function AuthModal({
 
           {errorMessage ? <div className="auth-feedback auth-feedback--error">{errorMessage}</div> : null}
           {noticeMessage ? <div className="auth-feedback auth-feedback--info">{noticeMessage}</div> : null}
-          {pendingInviteCode && (view === "register" || view === "bindWechat") ? (
-            <div className="auth-feedback auth-feedback--info">已接入推广码 {pendingInviteCode}，完成注册后会自动绑定邀请关系。</div>
-          ) : null}
 
           {(view === "register" || view === "reset") ? (
             <div className="auth-progress">
