@@ -65,6 +65,7 @@ platform:
       app-id: ${TENCENT_SMS_APPID:}
       sign-name: ${TENCENT_SMS_SIGN:}
       template-id: ${TENCENT_SMS_TEMPLATE_ID:}
+      order-notify-template-id: ${TENCENT_SMS_ORDER_NOTIFY_TEMPLATE_ID:2656384}
       valid-minutes: ${SMS_VALID_MINUTES:15}
       interval-seconds: ${SMS_INTERVAL_SECONDS:60}
   wechat:

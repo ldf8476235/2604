@@ -5,6 +5,7 @@ import com.deltatrade.platform.common.exception.BusinessException;
 import com.deltatrade.platform.common.exception.ErrorCode;
 import com.deltatrade.platform.modules.auth.mapper.AuthUserMapper;
 import com.deltatrade.platform.modules.auth.model.AuthUserDO;
+import com.deltatrade.platform.modules.auth.service.PnvsSmsVerificationService;
 import com.deltatrade.platform.modules.listing.mapper.AccountListingMapper;
 import com.deltatrade.platform.modules.listing.model.AccountListingDO;
 import com.deltatrade.platform.modules.im.service.ImService;
@@ -72,6 +73,7 @@ public class OrderService {
     private final UserWalletMapper userWalletMapper;
     private final WalletTransactionMapper walletTransactionMapper;
     private final UserMessageMapper userMessageMapper;
+    private final PnvsSmsVerificationService smsVerificationService;
     private final ObjectMapper objectMapper;
 
     public OrderService(
@@ -86,6 +88,7 @@ public class OrderService {
         UserWalletMapper userWalletMapper,
         WalletTransactionMapper walletTransactionMapper,
         UserMessageMapper userMessageMapper,
+        PnvsSmsVerificationService smsVerificationService,
         ObjectMapper objectMapper
     ) {
         this.tradeOrderMapper = tradeOrderMapper;
@@ -99,6 +102,7 @@ public class OrderService {
         this.userWalletMapper = userWalletMapper;
         this.walletTransactionMapper = walletTransactionMapper;
         this.userMessageMapper = userMessageMapper;
+        this.smsVerificationService = smsVerificationService;
         this.objectMapper = objectMapper;
     }
 
@@ -495,6 +499,7 @@ public class OrderService {
 	            "账号售出成功",
 	            "账号已售出，请进入群聊进行交接。订单 " + order.getOrderNo()
         );
+        sendSellerOrderNotify(order);
         log.info("trade wechat payment success orderNo={} transactionId={} paidAt={}",
             orderNo, transactionId, order.getPaidAt());
     }
@@ -1241,6 +1246,24 @@ public class OrderService {
         message.setCreatedAt(now);
         message.setUpdatedAt(now);
         userMessageMapper.insert(message);
+    }
+
+    private void sendSellerOrderNotify(TradeOrderDO order) {
+        if (order == null || order.getSellerUserId() == null) {
+            return;
+        }
+        try {
+            AuthUserDO seller = authUserMapper.selectById(order.getSellerUserId());
+            if (seller == null) {
+                log.warn("order notify sms skipped reason=seller_not_found orderNo={} sellerUserId={}",
+                    order.getOrderNo(), order.getSellerUserId());
+                return;
+            }
+            smsVerificationService.sendOrderNotify(seller.getPhone(), order.getOrderNo(), order.getCreatedAt());
+        } catch (Exception exception) {
+            log.error("order notify sms skipped reason=unexpected_error orderNo={} sellerUserId={}",
+                order.getOrderNo(), order.getSellerUserId(), exception);
+        }
     }
 
     private BigDecimal readPersonalSellerCommissionRate() {

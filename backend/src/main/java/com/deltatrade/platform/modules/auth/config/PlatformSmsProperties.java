@@ -152,6 +152,7 @@ public class PlatformSmsProperties {
         private String appId;
         private String signName;
         private String templateId;
+        private String orderNotifyTemplateId;
         private int validMinutes = 15;
         private int intervalSeconds = 60;
 
@@ -209,6 +210,14 @@ public class PlatformSmsProperties {
 
         public void setTemplateId(String templateId) {
             this.templateId = templateId;
+        }
+
+        public String getOrderNotifyTemplateId() {
+            return orderNotifyTemplateId;
+        }
+
+        public void setOrderNotifyTemplateId(String orderNotifyTemplateId) {
+            this.orderNotifyTemplateId = orderNotifyTemplateId;
         }
 
         public int getValidMinutes() {

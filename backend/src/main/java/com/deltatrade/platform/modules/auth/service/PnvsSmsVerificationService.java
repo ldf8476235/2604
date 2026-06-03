@@ -18,6 +18,8 @@ import com.tencentcloudapi.sms.v20210111.models.SendSmsRequest;
 import com.tencentcloudapi.sms.v20210111.models.SendSmsResponse;
 import com.tencentcloudapi.sms.v20210111.models.SendStatus;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class PnvsSmsVerificationService {
 
     private static final Logger log = LoggerFactory.getLogger(PnvsSmsVerificationService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final DateTimeFormatter ORDER_NOTIFY_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     private final PlatformSmsProperties smsProperties;
 
@@ -144,6 +147,75 @@ public class PnvsSmsVerificationService {
         }
     }
 
+    public boolean sendOrderNotify(String phone, String orderNo, LocalDateTime orderedAt) {
+        if (!smsProperties.isEnabled()) {
+            log.warn("order notify sms skipped reason=sms_disabled orderNo={} phone={}", orderNo, maskPhone(phone));
+            return false;
+        }
+        if (!StringUtils.hasText(phone)) {
+            log.warn("order notify sms skipped reason=empty_phone orderNo={}", orderNo);
+            return false;
+        }
+        if (smsProperties.isMockMode()) {
+            log.info("order notify sms mock success provider={} phone={} orderNo={}",
+                smsProperties.getProvider(), maskPhone(phone), orderNo);
+            return true;
+        }
+        if (!isTencentProvider()) {
+            log.warn("order notify sms skipped reason=unsupported_provider provider={} orderNo={} phone={}",
+                smsProperties.getProvider(), orderNo, maskPhone(phone));
+            return false;
+        }
+
+        PlatformSmsProperties.TencentProperties tencent = smsProperties.getTencent();
+        if (!isValidTencentNotifyConfig(tencent)) {
+            log.warn("order notify sms skipped reason=incomplete_tencent_config orderNo={} phone={}",
+                orderNo, maskPhone(phone));
+            return false;
+        }
+        long startAt = System.currentTimeMillis();
+        try {
+            SmsClient client = createTencentClient(tencent);
+            SendSmsRequest request = new SendSmsRequest();
+            request.setSmsSdkAppId(tencent.getAppId());
+            request.setSignName(tencent.getSignName());
+            request.setTemplateId(tencent.getOrderNotifyTemplateId());
+            request.setTemplateParamSet(new String[] { buildShortOrderNo(orderNo), formatOrderNotifyDate(orderedAt) });
+            request.setPhoneNumberSet(new String[] { "+86" + phone });
+            request.setSessionContext("ORDER_NOTIFY:" + orderNo);
+
+            SendSmsResponse response = client.SendSms(request);
+            SendStatus status = firstTencentStatus(response);
+            String providerCode = status == null ? "" : status.getCode();
+            log.info("order notify sms result phone={} orderNo={} providerCode={} serialNo={} costMs={}",
+                maskPhone(phone),
+                orderNo,
+                providerCode,
+                status == null ? "" : status.getSerialNo(),
+                System.currentTimeMillis() - startAt);
+            if (status == null || !"Ok".equalsIgnoreCase(providerCode)) {
+                log.warn("order notify sms failed orderNo={} phone={} providerMessage={}",
+                    orderNo, maskPhone(phone), status == null ? "响应为空" : status.getMessage());
+                return false;
+            }
+            return true;
+        } catch (TencentCloudSDKException exception) {
+            log.error("order notify sms exception orderNo={} phone={} costMs={}",
+                orderNo,
+                maskPhone(phone),
+                System.currentTimeMillis() - startAt,
+                exception);
+            return false;
+        } catch (Exception exception) {
+            log.error("order notify sms unexpected exception orderNo={} phone={} costMs={}",
+                orderNo,
+                maskPhone(phone),
+                System.currentTimeMillis() - startAt,
+                exception);
+            return false;
+        }
+    }
+
     private Client createClient(PlatformSmsProperties.PnvsProperties pnvs) throws Exception {
         Config config = new Config()
             .setAccessKeyId(pnvs.getAccessKeyId())
@@ -221,6 +293,14 @@ public class PnvsSmsVerificationService {
         }
     }
 
+    private boolean isValidTencentNotifyConfig(PlatformSmsProperties.TencentProperties tencent) {
+        return StringUtils.hasText(tencent.getSecretId())
+            && StringUtils.hasText(tencent.getSecretKey())
+            && StringUtils.hasText(tencent.getAppId())
+            && StringUtils.hasText(tencent.getSignName())
+            && StringUtils.hasText(tencent.getOrderNotifyTemplateId());
+    }
+
     private void validatePnvsConfig(PlatformSmsProperties.PnvsProperties pnvs) {
         if (!StringUtils.hasText(pnvs.getAccessKeyId())
             || !StringUtils.hasText(pnvs.getAccessKeySecret())
@@ -256,6 +336,21 @@ public class PnvsSmsVerificationService {
 
     private String safeMessage(String message) {
         return StringUtils.hasText(message) ? message : "未知错误";
+    }
+
+    private String buildShortOrderNo(String orderNo) {
+        if (!StringUtils.hasText(orderNo)) {
+            return "";
+        }
+        String normalized = orderNo.trim();
+        if (normalized.length() <= 6) {
+            return normalized;
+        }
+        return normalized.substring(normalized.length() - 6);
+    }
+
+    private String formatOrderNotifyDate(LocalDateTime orderedAt) {
+        return ORDER_NOTIFY_DATE_FORMATTER.format(orderedAt == null ? LocalDateTime.now() : orderedAt);
     }
 
     private String maskPhone(String phone) {
