@@ -2403,9 +2403,6 @@ function validateForm(
   if (!positiveInt(form.deliveryEndHour, 0, 24)) {
     errors.deliveryEndHour = "最晚时间需在 0-24 之间";
   }
-  if (!errors.deliveryStartHour && !errors.deliveryEndHour && Number(form.deliveryStartHour) > Number(form.deliveryEndHour)) {
-    errors.deliveryEndHour = "最晚时间不能早于最早时间";
-  }
   if (!positiveInt(form.safeBoxLevel, 1, 4)) {
     errors.safeBoxLevel = "请选择基础到顶级的安全箱档位";
   }

@@ -2450,7 +2450,7 @@ public class AdminConsoleService {
         if (startHour == null || endHour == null) {
             return "-";
         }
-        return startHour + ":00-" + endHour + ":00";
+        return startHour + ":00-" + (endHour < startHour ? "次日" : "") + endHour + ":00";
     }
 
     private String renderDefaultSpend(String value) {

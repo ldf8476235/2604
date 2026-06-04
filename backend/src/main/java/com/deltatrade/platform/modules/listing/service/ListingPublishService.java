@@ -666,9 +666,6 @@ public class ListingPublishService {
         if (command.getDeliveryEndHour() == null || command.getDeliveryEndHour() < 0 || command.getDeliveryEndHour() > 24) {
             throw new BusinessException(ErrorCode.BUSINESS_ERROR, "最晚上号时间需在 0-24 之间");
         }
-        if (command.getDeliveryStartHour() > command.getDeliveryEndHour()) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "最早上号时间不能晚于最晚上号时间");
-        }
         if (command.getAccountLevel() == null || command.getAccountLevel() < 1 || command.getAccountLevel() > 120) {
             throw new BusinessException(ErrorCode.BUSINESS_ERROR, "账号等级需在 1-120 之间");
         }

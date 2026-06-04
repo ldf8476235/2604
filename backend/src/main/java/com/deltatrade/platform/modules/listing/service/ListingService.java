@@ -1307,7 +1307,7 @@ public class ListingService {
         if (start == null || end == null) {
             return "上号时间待补";
         }
-        return "上号：" + start + "点 - " + end + "点";
+        return "上号：" + start + "点 - " + (end < start ? "次日" : "") + end + "点";
     }
 
     private String formatExtraItem(List<ExtraItemSnapshot> items, String code, String unit) {
